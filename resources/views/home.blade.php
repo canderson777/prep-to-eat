@@ -52,10 +52,32 @@
             0% { transform: rotate(0deg);}
             100% { transform: rotate(360deg);}
         }
+        /* Optional: Mobile styling for header links */
+        @media (max-width: 600px) {
+            .auth-links {
+                text-align: center !important;
+                margin-bottom: 18px !important;
+                font-size: 1.09em;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- AUTH LINKS (LOGIN/REGISTER OR USERNAME/LOGOUT) -->
+        <div class="auth-links" style="text-align:right; margin-bottom:12px;">
+            @auth
+                <span>Welcome, {{ Auth::user()->name }} |</span>
+                <form action="{{ route('logout') }}" method="POST" style="display:inline;">
+                    @csrf
+                    <button type="submit" aria-label="Logout" style="background:none;border:none;color:#007bff;cursor:pointer;">Logout</button>
+                </form>
+            @else
+                <a href="{{ route('login') }}" style="color:#007bff;">Login</a> |
+                <a href="{{ route('register') }}" style="color:#007bff;">Register</a>
+            @endauth
+        </div>
+
         <h1>PrepToEat</h1>
         <!-- Spinner Loader -->
         <div id="spinner">
