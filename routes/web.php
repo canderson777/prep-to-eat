@@ -1,32 +1,20 @@
 <?php
 
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Request;
-use OpenAI\Factory;
 
 Route::get('/', function () {
     return view('home');
 });
 
-Route::post('/recipe', function (Request $request) {
-    $input = $request->input('recipe_link');
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
 
-    $client = (new Factory())->withApiKey(env('OPENAI_API_KEY'))->make();
-
-    $prompt = "Extract the recipe's title, ingredients, instructions, and a summary or tip from the following input. Format the output in HTML. Use <h2 class='recipe-title'> for the recipe title. For section headers (Ingredients, Instructions, Summary), use <strong> and put each on their own line. Use <ul> for ingredients and <ol> for instructions.";
-
-
-    $result = $client->chat()->create([
-        'model' => 'gpt-3.5-turbo',
-        'messages' => [
-            [
-                'role' => 'user',
-                'content' => $prompt . "\n\nRECIPE:\n" . $input,
-            ],
-        ],
-    ]);
-
-    $aiResponse = $result->choices[0]->message->content ?? 'AI could not parse this recipe.';
-
-    return view('home', ['recipe' => $aiResponse]);
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+require __DIR__.'/auth.php';
