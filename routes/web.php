@@ -44,6 +44,10 @@ $prompt .= "\n\n" . $input;
 
     $aiResponse = $result->choices[0]->message->content ?? 'AI could not parse this recipe.';
 
+    // Remove Markdown code fences if present
+    $aiResponse = preg_replace('/^```html\s*|```$/mi', '', $aiResponse);
+
+
     return view('home', ['recipe' => $aiResponse]);
 });
 
