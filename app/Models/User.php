@@ -45,4 +45,11 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    // === Add this relationship method ===
+    public function savedRecipes()
+    {
+        // Use the full namespace to avoid any import issues
+        return $this->hasMany(\App\Models\SavedRecipe::class);
+    }
 }
