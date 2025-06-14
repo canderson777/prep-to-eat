@@ -45,21 +45,39 @@
         </div>
 
         <!-- Recipe Form -->
-        <form method="POST" action="/recipe">
+        <form method="POST" action="{{ url('/recipe') }}" id="recipeForm" enctype="multipart/form-data" novalidate>
             @csrf
             <label for="recipe_link">Paste your recipe link or text below:</label><br>
             <textarea name="recipe_link" id="recipe_link" rows="6" placeholder="Paste recipe URL or text here..." required></textarea><br><br>
-            <button type="submit">Get Recipe</button>
+            <input type="submit" value="Get Recipe" onclick="document.getElementById('spinner').style.display = 'block';" style="background: #38b6ff; color: #fff; border: none; padding: 12px 24px; border-radius: 4px; font-size: 16px; cursor: pointer;">
         </form>
 
+        <!-- Debug Information -->
+        @if(config('app.debug'))
+            <div style="margin-top: 20px; padding: 10px; background: #f8f9fa; border: 1px solid #ddd;">
+                <h4>Debug Info:</h4>
+                <p>Form Action: {{ url('/recipe') }}</p>
+                <p>Method: POST</p>
+                <p>CSRF Token: {{ csrf_token() }}</p>
+            </div>
+        @endif
+
         <!-- Output Result + Save Recipe -->
-        @isset($recipe)
+        @php
+            $recipe = session('recipe');
+            $title = session('title');
+            $ingredients = session('ingredients');
+            $instructions = session('instructions');
+            $summary = session('summary');
+        @endphp
+
+        @if($recipe)
             <div class="output">
                 <h2>Your Recipe:</h2>
                 <div class="ai-recipe-output">{!! $recipe !!}</div>
 
                 @auth
-                    <form method="POST" action="{{ route('recipes.save') }}">
+                    <form id="saveRecipeForm" action="{{ route('recipes.save') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <input type="hidden" name="title" value="{{ $title ?? '' }}">
                         <input type="hidden" name="ingredients" value="{{ $ingredients ?? '' }}">
@@ -79,10 +97,15 @@
                                 <option value="other">Other</option>
                             </select>
                             <input type="text" name="custom_category" id="custom_category" placeholder="Or enter custom category" style="padding:6px; border-radius:4px; border:1px solid #ccc; display:none;">
+                            @error('category')
+                                <div style="color: #dc2626; font-size: 0.875rem; margin-top: 0.5rem;">{{ $message }}</div>
+                            @enderror
+                            @error('custom_category')
+                                <div style="color: #dc2626; font-size: 0.875rem; margin-top: 0.5rem;">{{ $message }}</div>
+                            @enderror
                         </div>
                         <button type="submit" class="save-btn">Save Recipe</button>
                     </form>
-
                     <script>
                         document.getElementById('category').addEventListener('change', function() {
                             const customCategoryInput = document.getElementById('custom_category');
@@ -95,6 +118,19 @@
                             }
                         });
                     </script>
+
+                    @if(config('app.debug'))
+                        <div style="margin-top: 20px; padding: 10px; background: #f8f9fa; border: 1px solid #ddd;">
+                            <h4>Save Form Debug Info:</h4>
+                            <p>Form Action: {{ route('recipes.save') }}</p>
+                            <p>Method: POST</p>
+                            <p>CSRF Token: {{ csrf_token() }}</p>
+                            <p>Title: {{ $title ?? 'Not set' }}</p>
+                            <p>Ingredients Length: {{ isset($ingredients) ? strlen($ingredients) : 'Not set' }} chars</p>
+                            <p>Instructions Length: {{ isset($instructions) ? strlen($instructions) : 'Not set' }} chars</p>
+                            <p>Summary Length: {{ isset($summary) ? strlen($summary) : 'Not set' }} chars</p>
+                        </div>
+                    @endif
                 @else
                     <div style="margin-top:12px;">
                         <a href="{{ route('login') }}" style="color:#007bff;">Login</a> or
@@ -102,15 +138,7 @@
                     </div>
                 @endauth
             </div>
-        @endisset
+        @endif
     </div>
-
-    <!-- Show spinner on form submit -->
-    <script>
-        const form = document.querySelector('form');
-        form.addEventListener('submit', function() {
-            document.getElementById('spinner').style.display = 'block';
-        });
-    </script>
 </body>
 </html>

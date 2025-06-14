@@ -20,6 +20,7 @@ return new class extends Migration
         $table->text('instructions');
         $table->text('summary')->nullable();
         $table->timestamps();
+        $table->unique(['user_id', 'title']);
     });
 }
 
