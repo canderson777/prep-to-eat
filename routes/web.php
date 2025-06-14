@@ -43,12 +43,53 @@ PROMPT;
 
     $aiResponse = $result->choices[0]->message->content ?? 'AI could not parse this recipe.';
 
-    // Optional: You may want to parse out $title, $ingredients, $instructions, $summary here for saving
+    // Extract title, ingredients, instructions, and summary from the AI response
+    $title = '';
+    $ingredients = '';
+    $instructions = '';
+    $summary = '';
 
-    return view('home', [
+    // Extract title (usually the first line or surrounded by h1/h2 tags)
+    if (preg_match('/<h[1-2]>(.*?)<\/h[1-2]>/', $aiResponse, $titleMatch) || 
+        preg_match('/<strong>Title:<\/strong>(.*?)(?=<strong>|$)/s', $aiResponse, $titleMatch) || 
+        preg_match('/^(.*?)(?=<strong>|$)/s', $aiResponse, $titleMatch)) {
+        $title = trim(strip_tags($titleMatch[1]));
+    }
+
+    // Extract ingredients
+    if (preg_match('/<strong>Ingredients:<\/strong>(.*?)(?=<strong>|$)/s', $aiResponse, $ingredientsMatch) || 
+        preg_match('/<ul>(.*?)<\/ul>/s', $aiResponse, $ingredientsMatch)) {
+        $ingredients = trim(strip_tags($ingredientsMatch[1]));
+    }
+
+    // Extract instructions
+    if (preg_match('/<strong>Instructions:<\/strong>(.*?)(?=<strong>|$)/s', $aiResponse, $instructionsMatch) || 
+        preg_match('/<ol>(.*?)<\/ol>/s', $aiResponse, $instructionsMatch)) {
+        $instructions = trim(strip_tags($instructionsMatch[1]));
+    }
+
+    // Extract summary
+    if (preg_match('/<strong>Summary:<\/strong>(.*?)(?=<strong>|$)/s', $aiResponse, $summaryMatch) || 
+        preg_match('/<p>(.*?)<\/p>/s', $aiResponse, $summaryMatch)) {
+        $summary = trim(strip_tags($summaryMatch[1]));
+    }
+
+    // Store in session
+    session([
         'recipe' => $aiResponse,
-        // Optionally add: 'title' => ..., 'ingredients' => ..., etc.
+        'title' => $title ?: 'Untitled Recipe',
+        'ingredients' => $ingredients ?: 'No ingredients found',
+        'instructions' => $instructions ?: 'No instructions found',
+        'summary' => $summary ?: '',
     ]);
+
+    // Redirect to homepage
+    return redirect('/');
+})->middleware(['web']);
+
+// Prevent GET /recipe from causing a 405 error by redirecting to the homepage
+Route::get('/recipe', function () {
+    return redirect('/');
 });
 
 // =========== RECIPE ROUTES ============= //
