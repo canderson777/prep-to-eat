@@ -137,6 +137,36 @@
                         <a href="{{ route('register') }}" style="color:#007bff;">Register</a> to save recipes.
                     </div>
                 @endauth
+                
+                <!-- Q&A Section -->
+                <div id="qa" style="margin-top: 24px; padding-top: 12px; border-top: 1px solid #bfe6ff;">
+                    <h3 style="margin-bottom:10px;">Ask about this recipe</h3>
+                    @if(session('error'))
+                        <div style="background:#fdecea;color:#b71c1c;padding:10px;border-radius:4px;margin-bottom:10px;">{{ session('error') }}</div>
+                    @endif
+                    <form method="POST" action="{{ url('/recipe/ask') }}">
+                        @csrf
+                        <label for="question" style="display:block;margin-bottom:6px;">Your question (e.g., "Substitute for buttermilk?" or "Make it gluten-free?")</label>
+                        <textarea id="question" name="question" rows="3" placeholder="Type your question here..." required style="width:100%;padding:10px;border-radius:4px;border:1px solid #ccc;"></textarea>
+                        @error('question')
+                            <div style="color:#dc2626;margin-top:6px;">{{ $message }}</div>
+                        @enderror
+                        <div style="margin-top:10px;">
+                            <button type="submit">Ask</button>
+                        </div>
+                    </form>
+
+                    @php
+                        $qaQuestion = session('qa_question');
+                        $qaAnswer = session('qa_answer');
+                    @endphp
+                    @if(!empty($qaAnswer))
+                        <div style="margin-top:16px;background:#fff;border:1px solid #cfe9ff;border-radius:6px;padding:12px;">
+                            <div style="color:#555;font-size:0.95em;margin-bottom:6px;"><strong>You asked:</strong> {{ $qaQuestion }}</div>
+                            <div style="white-space:pre-wrap;">{{ $qaAnswer }}</div>
+                        </div>
+                    @endif
+                </div>
             </div>
         @endif
     </div>
