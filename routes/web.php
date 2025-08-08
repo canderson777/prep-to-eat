@@ -92,6 +92,59 @@ Route::get('/recipe', function () {
     return redirect('/');
 });
 
+// =========== AI Q&A ABOUT CURRENT RECIPE ============= //
+Route::post('/recipe/ask', function (Request $request) {
+    $validated = $request->validate([
+        'question' => 'required|string|max:2000',
+    ]);
+
+    // Ensure there is a recipe context available
+    $recipeHtml = session('recipe');
+    $title = session('title', '');
+    $ingredients = session('ingredients', '');
+    $instructions = session('instructions', '');
+    $summary = session('summary', '');
+
+    if (empty($recipeHtml)) {
+        return redirect('/')->with('error', 'Please generate a recipe first, then ask a question.');
+    }
+
+    $client = (new Factory())->withApiKey(env('OPENAI_API_KEY'))->make();
+
+    $system = 'You are a helpful culinary assistant. Use the provided recipe context to answer the user\'s question. '
+        .'Be concise and practical. Provide substitutions with measurements and notes about taste/texture impacts. '
+        .'Offer dietary alternatives when requested. Provide precise temperatures/timings when converting. '
+        .'If food safety is involved, err on the side of caution.';
+
+    $context = "Recipe Context\n"
+        ."Title: {$title}\n\n"
+        ."Ingredients:\n{$ingredients}\n\n"
+        ."Instructions:\n{$instructions}\n\n"
+        .(!empty($summary) ? "Summary:\n{$summary}\n\n" : '');
+
+    $question = $validated['question'];
+
+    try {
+        $result = $client->chat()->create([
+            'model' => 'gpt-3.5-turbo',
+            'messages' => [
+                [ 'role' => 'system', 'content' => $system ],
+                [ 'role' => 'user', 'content' => $context."User question: \n".$question ],
+            ],
+        ]);
+        $answer = $result->choices[0]->message->content ?? 'Sorry, I could not generate an answer.';
+    } catch (\Throwable $e) {
+        $answer = 'There was a problem generating an answer. Please try again.';
+    }
+
+    session([
+        'qa_question' => $question,
+        'qa_answer' => $answer,
+    ]);
+
+    return redirect('/#qa');
+})->middleware(['web']);
+
 // =========== RECIPE ROUTES ============= //
 Route::post('/recipes/save', [SavedRecipeController::class, 'store'])->name('recipes.save')->middleware('auth');
 Route::get('/my-recipes', [SavedRecipeController::class, 'index'])->name('recipes.index')->middleware('auth');

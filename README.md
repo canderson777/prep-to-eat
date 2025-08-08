@@ -68,3 +68,16 @@ Save your work:
 git add .
 git commit -m "Add authentication links to top of app and update Blade layout"
 git push
+
+
+## Start the server
+
+Make sure to be in the directory folder. (cd C:\Users\Jay\Documents\PreptoEat\preptoeat)
+Run XAMPP as Admin
+Start Apache  SQL 
+Run command php artisan serve 
+
+
+## Recipe Examples 
+https://www.allrecipes.com/recipe/223040/cold-busting-ginger-chicken-noodle-soup/
+https://cookieandkate.com/homemade-almond-butter-recipe/
