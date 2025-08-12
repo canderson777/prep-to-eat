@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SavedRecipeController;
+use App\Http\Controllers\SavedRecipeImportController;
 use App\Models\SavedRecipe;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
@@ -149,6 +150,16 @@ Route::post('/recipe/ask', function (Request $request) {
 Route::post('/recipes/save', [SavedRecipeController::class, 'store'])->name('recipes.save')->middleware('auth');
 Route::get('/my-recipes', [SavedRecipeController::class, 'index'])->name('recipes.index')->middleware('auth');
 Route::delete('/recipes/{id}', [SavedRecipeController::class, 'destroy'])->name('recipes.destroy')->middleware('auth');
+
+// Import saved recipes from guest/local (auth only)
+Route::post('/recipes/import-guest', [SavedRecipeImportController::class, 'import'])
+    ->middleware('auth')
+    ->name('recipes.import');
+
+// Guest local recipes view (no auth)
+Route::get('/my-local-recipes', function () {
+    return view('saved_recipes.index_local');
+})->name('recipes.local');
 
 // Profile routes, dashboard, etc...
 Route::middleware('auth')->group(function () {

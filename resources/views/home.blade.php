@@ -32,7 +32,9 @@
                 </form>
             @else
                 <a href="{{ route('login') }}" style="color:#007bff;">Login</a> |
-                <a href="{{ route('register') }}" style="color:#007bff;">Register</a>
+                <a href="{{ route('register') }}" style="color:#007bff;">Register</a> |
+                <a href="{{ route('recipes.local') }}" style="color:#007bff;">My Local Recipes</a> |
+                <span>Saved locally: <strong id="local-count">0</strong>/4</span>
             @endauth
         </div>
 
@@ -133,9 +135,119 @@
                     @endif
                 @else
                     <div style="margin-top:12px;">
-                        <a href="{{ route('login') }}" style="color:#007bff;">Login</a> or
-                        <a href="{{ route('register') }}" style="color:#007bff;">Register</a> to save recipes.
+                        <div style="margin:14px 0;">
+                            <label for="guest_category"><strong>Category:</strong></label>
+                            <select id="guest_category" style="padding:6px; border-radius:4px; border:1px solid #ccc; margin-right:8px;">
+                                <option value="">Select a category</option>
+                                <option value="Breakfast">Breakfast</option>
+                                <option value="Lunch">Lunch</option>
+                                <option value="Dinner">Dinner</option>
+                                <option value="Dessert">Dessert</option>
+                                <option value="Snack">Snack</option>
+                                <option value="Appetizer">Appetizer</option>
+                                <option value="Beverage">Beverage</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <input type="text" id="guest_custom_category" placeholder="Or enter custom category" style="padding:6px; border-radius:4px; border:1px solid #ccc; display:none;">
+                        </div>
+                        <button type="button" class="save-btn" id="guestSaveBtn">Save Locally</button>
+                        <div id="guestSaveMsg" style="display:none; color:#065f46; margin-top:8px;">Saved to your browser.</div>
+                        <div style="margin-top:12px;">
+                            Create an account to sync your saved recipes later: 
+                            <a href="{{ route('register') }}" style="color:#007bff;">Register</a> or
+                            <a href="{{ route('login') }}" style="color:#007bff;">Login</a>
+                        </div>
                     </div>
+                    <script>
+                        (function() {
+                            const guestCategorySelect = document.getElementById('guest_category');
+                            const guestCustomCategoryInput = document.getElementById('guest_custom_category');
+                            if (guestCategorySelect) {
+                                guestCategorySelect.addEventListener('change', function() {
+                                    if (this.value === 'other') {
+                                        guestCustomCategoryInput.style.display = 'inline-block';
+                                        guestCustomCategoryInput.required = true;
+                                    } else {
+                                        guestCustomCategoryInput.style.display = 'none';
+                                        guestCustomCategoryInput.required = false;
+                                    }
+                                });
+                            }
+
+                            const guestSaveBtn = document.getElementById('guestSaveBtn');
+                            if (guestSaveBtn) {
+                                guestSaveBtn.addEventListener('click', function() {
+                                    try {
+                                        const MAX_GUEST_RECIPES = 4;
+                                        const baseRecipe = {
+                                            title: @json($title ?? ''),
+                                            ingredients: @json($ingredients ?? ''),
+                                            instructions: @json($instructions ?? ''),
+                                            summary: @json($summary ?? ''),
+                                        };
+
+                                        let chosenCategory = '';
+                                        if (guestCategorySelect) {
+                                            chosenCategory = guestCategorySelect.value === 'other' 
+                                                ? (guestCustomCategoryInput.value || '').trim() 
+                                                : guestCategorySelect.value;
+                                        }
+
+                                        const savedRecipes = JSON.parse(localStorage.getItem('guestRecipes') || '[]');
+                                        if (savedRecipes.length >= MAX_GUEST_RECIPES) {
+                                            const msg = document.getElementById('guestSaveMsg');
+                                            if (msg) {
+                                                msg.style.display = 'block';
+                                                msg.style.color = '#b91c1c';
+                                                msg.textContent = 'Limit reached (4). Register or log in to save more.';
+                                            }
+                                            const btn = document.getElementById('guestSaveBtn');
+                                            if (btn) {
+                                                btn.disabled = true;
+                                                btn.style.opacity = '0.6';
+                                                btn.style.cursor = 'not-allowed';
+                                            }
+                                            return;
+                                        }
+                                        const recipeToSave = Object.assign({}, baseRecipe, {
+                                            category: chosenCategory || null,
+                                            savedAt: new Date().toISOString(),
+                                            id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('gr_' + Date.now())
+                                        });
+                                        savedRecipes.push(recipeToSave);
+                                        localStorage.setItem('guestRecipes', JSON.stringify(savedRecipes));
+
+                                        const msg = document.getElementById('guestSaveMsg');
+                                        if (msg) {
+                                            msg.style.display = 'block';
+                                            msg.style.color = '#065f46';
+                                            msg.textContent = 'Saved! (' + savedRecipes.length + ' of ' + MAX_GUEST_RECIPES + ')';
+                                        }
+
+                                        const countEl = document.getElementById('local-count');
+                                        if (countEl) countEl.textContent = savedRecipes.length;
+
+                                        // If we just hit the limit, disable the button and show limit message
+                                        if (savedRecipes.length >= MAX_GUEST_RECIPES) {
+                                            const btn = document.getElementById('guestSaveBtn');
+                                            if (btn) {
+                                                btn.disabled = true;
+                                                btn.style.opacity = '0.6';
+                                                btn.style.cursor = 'not-allowed';
+                                            }
+                                            if (msg) {
+                                                msg.style.display = 'block';
+                                                msg.style.color = '#b91c1c';
+                                                msg.textContent = 'Limit reached (4). Register or log in to save more.';
+                                            }
+                                        }
+                                    } catch (e) {
+                                        alert('Could not save locally. Please ensure your browser allows local storage.');
+                                    }
+                                });
+                            }
+                        })();
+                    </script>
                 @endauth
                 
                 <!-- Q&A Section -->
@@ -170,5 +282,28 @@
             </div>
         @endif
     </div>
+    <script>
+        (function() {
+            try {
+                const MAX_GUEST_RECIPES = 4;
+                const saved = JSON.parse(localStorage.getItem('guestRecipes') || '[]');
+                const el = document.getElementById('local-count');
+                if (el) el.textContent = saved.length;
+                const guestSaveBtn = document.getElementById('guestSaveBtn');
+                if (guestSaveBtn && saved.length >= MAX_GUEST_RECIPES) {
+                    guestSaveBtn.disabled = true;
+                    guestSaveBtn.style.opacity = '0.6';
+                    guestSaveBtn.style.cursor = 'not-allowed';
+                    guestSaveBtn.title = 'Limit reached (4). Register or log in to save more.';
+                    const msg = document.getElementById('guestSaveMsg');
+                    if (msg) {
+                        msg.style.display = 'block';
+                        msg.style.color = '#b91c1c';
+                        msg.textContent = 'Limit reached (4). Register or log in to save more.';
+                    }
+                }
+            } catch (e) { /* ignore */ }
+        })();
+    </script>
 </body>
 </html>
