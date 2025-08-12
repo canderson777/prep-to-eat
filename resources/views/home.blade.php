@@ -52,6 +52,7 @@
             <label for="recipe_link">Paste your recipe link or text below:</label><br>
             <textarea name="recipe_link" id="recipe_link" rows="6" placeholder="Paste recipe URL or text here..." required></textarea><br><br>
             <input type="submit" value="Get Recipe" onclick="document.getElementById('spinner').style.display = 'block';" style="background: #38b6ff; color: #fff; border: none; padding: 12px 24px; border-radius: 4px; font-size: 16px; cursor: pointer;">
+            <button type="button" onclick="window.location.href='/?clear=1'" style="margin-left:12px;">Refresh</button>
         </form>
 
         

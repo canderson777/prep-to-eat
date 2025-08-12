@@ -11,6 +11,11 @@ use OpenAI\Factory;
 
 // Homepage
 Route::get('/', function () {
+    // Optional clear flag to reset current recipe from session
+    if (request()->boolean('clear')) {
+        session()->forget(['recipe', 'title', 'ingredients', 'instructions', 'summary', 'qa_question', 'qa_answer']);
+        return redirect('/');
+    }
     return view('home');
 });
 
