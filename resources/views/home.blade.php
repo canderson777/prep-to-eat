@@ -54,15 +54,7 @@
             <input type="submit" value="Get Recipe" onclick="document.getElementById('spinner').style.display = 'block';" style="background: #38b6ff; color: #fff; border: none; padding: 12px 24px; border-radius: 4px; font-size: 16px; cursor: pointer;">
         </form>
 
-        <!-- Debug Information -->
-        @if(config('app.debug'))
-            <div style="margin-top: 20px; padding: 10px; background: #f8f9fa; border: 1px solid #ddd;">
-                <h4>Debug Info:</h4>
-                <p>Form Action: {{ url('/recipe') }}</p>
-                <p>Method: POST</p>
-                <p>CSRF Token: {{ csrf_token() }}</p>
-            </div>
-        @endif
+        
 
         <!-- Output Result + Save Recipe -->
         @php
@@ -121,18 +113,7 @@
                         });
                     </script>
 
-                    @if(config('app.debug'))
-                        <div style="margin-top: 20px; padding: 10px; background: #f8f9fa; border: 1px solid #ddd;">
-                            <h4>Save Form Debug Info:</h4>
-                            <p>Form Action: {{ route('recipes.save') }}</p>
-                            <p>Method: POST</p>
-                            <p>CSRF Token: {{ csrf_token() }}</p>
-                            <p>Title: {{ $title ?? 'Not set' }}</p>
-                            <p>Ingredients Length: {{ isset($ingredients) ? strlen($ingredients) : 'Not set' }} chars</p>
-                            <p>Instructions Length: {{ isset($instructions) ? strlen($instructions) : 'Not set' }} chars</p>
-                            <p>Summary Length: {{ isset($summary) ? strlen($summary) : 'Not set' }} chars</p>
-                        </div>
-                    @endif
+                    
                 @else
                     <div style="margin-top:12px;">
                         <div style="margin:14px 0;">
