@@ -38,6 +38,64 @@
             @endauth
         </div>
 
+        @auth
+            <div id="importBanner" style="display:none; margin:12px 0; padding:10px 14px; background:#e6ffe7; border-left:5px solid #28b76b; border-radius:6px;">
+              We found <strong><span id="importCount">0</span></strong> recipes saved locally.
+              <button id="importBtn" style="margin-left:8px; background:#28b76b; color:#fff; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">
+                Import to my account
+              </button>
+              <button id="dismissImport" style="margin-left:6px; background:#e5e7eb; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">
+                Not now
+              </button>
+            </div>
+
+            <script>
+            (function () {
+              const KEY = 'guestRecipes';
+              const SEEN = 'import_banner_dismissed';
+
+              function getGuestRecipes(){ try{return JSON.parse(localStorage.getItem(KEY))||[]}catch{return[]}}
+              const list = getGuestRecipes();
+              if (!list.length || localStorage.getItem(SEEN)==='1') return;
+
+              const b=document.getElementById('importBanner');
+              const c=document.getElementById('importCount');
+              const btn=document.getElementById('importBtn');
+              const dis=document.getElementById('dismissImport');
+              if(!b||!c||!btn||!dis) return;
+
+              c.textContent = list.length;
+              b.style.display = 'block';
+
+              btn.addEventListener('click', async () => {
+                try {
+                  const res = await fetch("{{ route('recipes.import') }}", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                    },
+                    body: JSON.stringify({ recipes: list })
+                  });
+                  if (!res.ok) throw new Error('Import failed');
+
+                  localStorage.removeItem(KEY);
+                  localStorage.removeItem('free_uses'); // reset your guest limit
+                  alert('Imported! Your recipes are now in your account.');
+                  window.location.href = "{{ route('recipes.index') }}";
+                } catch (e) {
+                  alert('Could not import. Please try again.');
+                }
+              });
+
+              dis.addEventListener('click', () => {
+                localStorage.setItem(SEEN, '1');
+                b.style.display = 'none';
+              });
+            })();
+            </script>
+        @endauth
+
         <h1>PrepToEat</h1>
 
         <!-- Spinner Loader -->
