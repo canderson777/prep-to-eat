@@ -27,6 +27,11 @@
         </div>
 
         <h1>My Local Recipes</h1>
+		@guest
+			<div style="text-align:center; margin-bottom: 12px;">
+				<a href="/login" id="signinImportBtn" class="btn">Sign in to import all</a>
+			</div>
+		@endguest
         <div class="actions">
             <button class="btn" id="exportBtn">Export JSON</button>
             <button class="btn secondary" id="importBtn">Import JSON</button>
@@ -125,6 +130,12 @@
             document.getElementById('importBtn').addEventListener('click', function() {
                 importFile.click();
             });
+				const signInBtn = document.getElementById('signinImportBtn');
+				if (signInBtn) {
+					signInBtn.addEventListener('click', function() {
+						try { localStorage.removeItem('import_banner_dismissed'); } catch {}
+					});
+				}
             importFile.addEventListener('change', function() {
                 const file = importFile.files[0];
                 if (!file) return;
