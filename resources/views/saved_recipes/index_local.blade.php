@@ -27,6 +27,7 @@
         </div>
 
         <h1>My Local Recipes</h1>
+        <p style="text-align:center; color:#475569; margin-bottom:18px;">Local storage is limited to four recipes per browser.</p>
 		@guest
 			<div style="text-align:center; margin-bottom: 12px;">
 				<a href="/login" id="signinImportBtn" class="btn">Sign in to import all</a>
@@ -46,15 +47,61 @@
     <script>
         (function() {
             const KEY = 'guestRecipes';
+            const MAX_ITEMS = 4;
             const listEl = document.getElementById('list');
             const emptyEl = document.getElementById('empty');
             const importFile = document.getElementById('importFile');
 
-            function getAll() {
-                try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { return []; }
+            function sanitizeRecipes(list) {
+                if (!Array.isArray(list)) return [];
+
+                const nowIso = new Date().toISOString();
+                const deduped = [];
+                const seen = new Set();
+
+                for (const item of list) {
+                    if (!item || typeof item !== 'object') continue;
+                    const recipe = Object.assign({}, item);
+                    if (!recipe.id) {
+                        const fallbackId = 'gr_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+                        recipe.id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : fallbackId;
+                    }
+                    if (!recipe.savedAt) {
+                        recipe.savedAt = nowIso;
+                    }
+                    if (seen.has(recipe.id)) continue;
+                    seen.add(recipe.id);
+                    deduped.push(recipe);
+                }
+
+                deduped.sort(function(a, b) {
+                    return new Date(a.savedAt).getTime() - new Date(b.savedAt).getTime();
+                });
+
+                if (deduped.length > MAX_ITEMS) {
+                    deduped.splice(0, deduped.length - MAX_ITEMS);
+                }
+
+                return deduped;
             }
-            function setAll(arr) {
-                localStorage.setItem(KEY, JSON.stringify(arr));
+
+            function getAll() {
+                try {
+                    const parsed = JSON.parse(localStorage.getItem(KEY) || '[]');
+                    const sanitized = sanitizeRecipes(parsed);
+                    localStorage.setItem(KEY, JSON.stringify(sanitized));
+                    return sanitized;
+                } catch {
+                    return [];
+                }
+            }
+            function setAll(arr, options = {}) {
+                const sanitized = sanitizeRecipes(arr);
+                localStorage.setItem(KEY, JSON.stringify(sanitized));
+                if (options.notifyLimit && sanitized.length < arr.length && arr.length > MAX_ITEMS) {
+                    alert('Only the most recent four recipes were kept due to the local storage limit.');
+                }
+                return sanitized;
             }
             function render() {
                 const items = getAll();
@@ -144,12 +191,8 @@
                     try {
                         const current = getAll();
                         const incoming = JSON.parse(reader.result || '[]');
-                        const byId = new Map(current.map(x => [x.id, x]));
-                        for (const r of Array.isArray(incoming) ? incoming : []) {
-                            if (!r.id) r.id = 'gr_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-                            byId.set(r.id, r);
-                        }
-                        setAll(Array.from(byId.values()));
+                        const merged = Array.isArray(incoming) ? current.concat(incoming) : current;
+                        setAll(merged, { notifyLimit: true });
                         render();
                     } catch (err) {
                         alert('Invalid JSON file.');
