@@ -200,8 +200,94 @@
                     </div>
                     <script>
                         (function() {
+                            const STORAGE_KEY = 'guestRecipes';
+                            const MAX_GUEST_RECIPES = 4;
+                            const LIMIT_MESSAGE = 'Limit reached. Register or log in to save more.';
+
                             const guestCategorySelect = document.getElementById('guest_category');
                             const guestCustomCategoryInput = document.getElementById('guest_custom_category');
+                            const guestSaveBtn = document.getElementById('guestSaveBtn');
+                            const guestSaveMsg = document.getElementById('guestSaveMsg');
+                            const countEl = document.getElementById('local-count');
+
+                            function sanitizeRecipes(list) {
+                                if (!Array.isArray(list)) return [];
+                                const nowIso = new Date().toISOString();
+                                const deduped = [];
+                                const seen = new Set();
+
+                                for (const item of list) {
+                                    if (!item || typeof item !== 'object') continue;
+                                    const recipe = Object.assign({}, item);
+                                    if (!recipe.id) {
+                                        const fallbackId = 'gr_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+                                        recipe.id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : fallbackId;
+                                    }
+                                    if (!recipe.savedAt) {
+                                        recipe.savedAt = nowIso;
+                                    }
+                                    if (seen.has(recipe.id)) continue;
+                                    seen.add(recipe.id);
+                                    deduped.push(recipe);
+                                }
+
+                                deduped.sort(function(a, b) {
+                                    return new Date(a.savedAt).getTime() - new Date(b.savedAt).getTime();
+                                });
+
+                                if (deduped.length > MAX_GUEST_RECIPES) {
+                                    deduped.splice(0, deduped.length - MAX_GUEST_RECIPES);
+                                }
+
+                                return deduped;
+                            }
+
+                            function getStoredRecipes() {
+                                try {
+                                    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+                                    const sanitized = sanitizeRecipes(parsed);
+                                    localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
+                                    return sanitized;
+                                } catch (error) {
+                                    return [];
+                                }
+                            }
+
+                            function saveRecipes(list) {
+                                const sanitized = sanitizeRecipes(list);
+                                localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
+                                return sanitized;
+                            }
+
+                            function updateUiForCount(count) {
+                                if (countEl) {
+                                    countEl.textContent = count;
+                                }
+
+                                if (!guestSaveBtn) return;
+
+                                if (count >= MAX_GUEST_RECIPES) {
+                                    guestSaveBtn.disabled = true;
+                                    guestSaveBtn.style.opacity = '0.6';
+                                    guestSaveBtn.style.cursor = 'not-allowed';
+                                    if (guestSaveMsg) {
+                                        guestSaveMsg.dataset.state = 'limit';
+                                        guestSaveMsg.style.display = 'block';
+                                        guestSaveMsg.style.color = '#b91c1c';
+                                        guestSaveMsg.textContent = LIMIT_MESSAGE;
+                                    }
+                                } else {
+                                    guestSaveBtn.disabled = false;
+                                    guestSaveBtn.style.opacity = '';
+                                    guestSaveBtn.style.cursor = '';
+                                    if (guestSaveMsg && guestSaveMsg.dataset.state === 'limit') {
+                                        guestSaveMsg.style.display = 'none';
+                                        guestSaveMsg.textContent = '';
+                                        guestSaveMsg.dataset.state = '';
+                                    }
+                                }
+                            }
+
                             if (guestCategorySelect) {
                                 guestCategorySelect.addEventListener('change', function() {
                                     if (this.value === 'other') {
@@ -214,78 +300,61 @@
                                 });
                             }
 
-                            const guestSaveBtn = document.getElementById('guestSaveBtn');
-                            if (guestSaveBtn) {
-                                guestSaveBtn.addEventListener('click', function() {
-                                    try {
-                                        const MAX_GUEST_RECIPES = 4;
-                                        const baseRecipe = {
-                                            title: @json($title ?? ''),
-                                            ingredients: @json($ingredients ?? ''),
-                                            instructions: @json($instructions ?? ''),
-                                            summary: @json($summary ?? ''),
-                                        };
-
-                                        let chosenCategory = '';
-                                        if (guestCategorySelect) {
-                                            chosenCategory = guestCategorySelect.value === 'other' 
-                                                ? (guestCustomCategoryInput.value || '').trim() 
-                                                : guestCategorySelect.value;
-                                        }
-
-                                        const savedRecipes = JSON.parse(localStorage.getItem('guestRecipes') || '[]');
-                                        if (savedRecipes.length >= MAX_GUEST_RECIPES) {
-                                            const msg = document.getElementById('guestSaveMsg');
-                                            if (msg) {
-                                                msg.style.display = 'block';
-                                                msg.style.color = '#b91c1c';
-                                                msg.textContent = 'Limit reached (4). Register or log in to save more.';
-                                            }
-                                            const btn = document.getElementById('guestSaveBtn');
-                                            if (btn) {
-                                                btn.disabled = true;
-                                                btn.style.opacity = '0.6';
-                                                btn.style.cursor = 'not-allowed';
-                                            }
-                                            return;
-                                        }
-                                        const recipeToSave = Object.assign({}, baseRecipe, {
-                                            category: chosenCategory || null,
-                                            savedAt: new Date().toISOString(),
-                                            id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('gr_' + Date.now())
-                                        });
-                                        savedRecipes.push(recipeToSave);
-                                        localStorage.setItem('guestRecipes', JSON.stringify(savedRecipes));
-
-                                        const msg = document.getElementById('guestSaveMsg');
-                                        if (msg) {
-                                            msg.style.display = 'block';
-                                            msg.style.color = '#065f46';
-                                            msg.textContent = 'Saved! (' + savedRecipes.length + ' of ' + MAX_GUEST_RECIPES + ')';
-                                        }
-
-                                        const countEl = document.getElementById('local-count');
-                                        if (countEl) countEl.textContent = savedRecipes.length;
-
-                                        // If we just hit the limit, disable the button and show limit message
-                                        if (savedRecipes.length >= MAX_GUEST_RECIPES) {
-                                            const btn = document.getElementById('guestSaveBtn');
-                                            if (btn) {
-                                                btn.disabled = true;
-                                                btn.style.opacity = '0.6';
-                                                btn.style.cursor = 'not-allowed';
-                                            }
-                                            if (msg) {
-                                                msg.style.display = 'block';
-                                                msg.style.color = '#b91c1c';
-                                                msg.textContent = 'Limit reached (4). Register or log in to save more.';
-                                            }
-                                        }
-                                    } catch (e) {
-                                        alert('Could not save locally. Please ensure your browser allows local storage.');
-                                    }
-                                });
+                            if (guestSaveMsg) {
+                                guestSaveMsg.style.display = 'none';
+                                guestSaveMsg.textContent = '';
+                                guestSaveMsg.dataset.state = '';
                             }
+
+                            const initialRecipes = getStoredRecipes();
+                            updateUiForCount(initialRecipes.length);
+
+                            if (!guestSaveBtn) {
+                                return;
+                            }
+
+                            guestSaveBtn.addEventListener('click', function() {
+                                try {
+                                    const baseRecipe = {
+                                        title: @json($title ?? ''),
+                                        ingredients: @json($ingredients ?? ''),
+                                        instructions: @json($instructions ?? ''),
+                                        summary: @json($summary ?? ''),
+                                    };
+
+                                    let chosenCategory = '';
+                                    if (guestCategorySelect) {
+                                        chosenCategory = guestCategorySelect.value === 'other'
+                                            ? (guestCustomCategoryInput.value || '').trim()
+                                            : guestCategorySelect.value;
+                                    }
+
+                                    const current = getStoredRecipes();
+                                    if (current.length >= MAX_GUEST_RECIPES) {
+                                        updateUiForCount(current.length);
+                                        return;
+                                    }
+
+                                    const recipeToSave = Object.assign({}, baseRecipe, {
+                                        category: chosenCategory || null,
+                                        savedAt: new Date().toISOString(),
+                                        id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('gr_' + Date.now())
+                                    });
+
+                                    const next = saveRecipes(current.concat(recipeToSave));
+
+                                    updateUiForCount(next.length);
+
+                                    if (guestSaveMsg && next.length < MAX_GUEST_RECIPES) {
+                                        guestSaveMsg.dataset.state = 'success';
+                                        guestSaveMsg.style.display = 'block';
+                                        guestSaveMsg.style.color = '#065f46';
+                                        guestSaveMsg.textContent = 'Saved! (' + next.length + ' of ' + MAX_GUEST_RECIPES + ')';
+                                    }
+                                } catch (e) {
+                                    alert('Could not save locally. Please ensure your browser allows local storage.');
+                                }
+                            });
                         })();
                     </script>
                 @endauth
@@ -324,22 +393,76 @@
     </div>
     <script>
         (function() {
+            const STORAGE_KEY = 'guestRecipes';
+            const MAX_GUEST_RECIPES = 4;
+            const LIMIT_MESSAGE = 'Limit reached. Register or log in to save more.';
+
+            function sanitize(list) {
+                if (!Array.isArray(list)) return [];
+
+                const nowIso = new Date().toISOString();
+                const deduped = [];
+                const seen = new Set();
+
+                for (const item of list) {
+                    if (!item || typeof item !== 'object') continue;
+                    const recipe = Object.assign({}, item);
+                    if (!recipe.id) {
+                        const fallbackId = 'gr_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+                        recipe.id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : fallbackId;
+                    }
+                    if (!recipe.savedAt) {
+                        recipe.savedAt = nowIso;
+                    }
+                    if (seen.has(recipe.id)) continue;
+                    seen.add(recipe.id);
+                    deduped.push(recipe);
+                }
+
+                deduped.sort(function(a, b) {
+                    return new Date(a.savedAt).getTime() - new Date(b.savedAt).getTime();
+                });
+
+                if (deduped.length > MAX_GUEST_RECIPES) {
+                    deduped.splice(0, deduped.length - MAX_GUEST_RECIPES);
+                }
+
+                return deduped;
+            }
+
             try {
-                const MAX_GUEST_RECIPES = 4;
-                const saved = JSON.parse(localStorage.getItem('guestRecipes') || '[]');
+                const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+                const sanitized = sanitize(parsed);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
+
                 const el = document.getElementById('local-count');
-                if (el) el.textContent = saved.length;
+                if (el) el.textContent = sanitized.length;
+
                 const guestSaveBtn = document.getElementById('guestSaveBtn');
-                if (guestSaveBtn && saved.length >= MAX_GUEST_RECIPES) {
+                if (!guestSaveBtn) return;
+
+                const msg = document.getElementById('guestSaveMsg');
+
+                if (sanitized.length >= MAX_GUEST_RECIPES) {
                     guestSaveBtn.disabled = true;
                     guestSaveBtn.style.opacity = '0.6';
                     guestSaveBtn.style.cursor = 'not-allowed';
-                    guestSaveBtn.title = 'Limit reached (4). Register or log in to save more.';
-                    const msg = document.getElementById('guestSaveMsg');
+                    guestSaveBtn.title = LIMIT_MESSAGE;
                     if (msg) {
+                        msg.dataset.state = 'limit';
                         msg.style.display = 'block';
                         msg.style.color = '#b91c1c';
-                        msg.textContent = 'Limit reached (4). Register or log in to save more.';
+                        msg.textContent = LIMIT_MESSAGE;
+                    }
+                } else {
+                    guestSaveBtn.disabled = false;
+                    guestSaveBtn.style.opacity = '';
+                    guestSaveBtn.style.cursor = '';
+                    guestSaveBtn.removeAttribute('title');
+                    if (msg && msg.dataset.state === 'limit') {
+                        msg.style.display = 'none';
+                        msg.textContent = '';
+                        msg.dataset.state = '';
                     }
                 }
             } catch (e) { /* ignore */ }
