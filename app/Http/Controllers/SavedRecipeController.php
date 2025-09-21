@@ -53,8 +53,24 @@ class SavedRecipeController extends Controller
     // Show user's saved recipes
     public function index()
     {
-        $recipes = Auth::user()->savedRecipes()->latest()->get();
-        return view('saved_recipes.index', compact('recipes'));
+        $recipes = Auth::user()
+            ->savedRecipes()
+            ->with(['shares' => function ($query) {
+                $query->where(function ($inner) {
+                    $inner->whereNull('expires_at')->orWhere('expires_at', '>', now());
+                })->orderByDesc('created_at');
+            }])
+            ->latest()
+            ->get();
+
+        $upcomingPlans = Auth::user()->mealPlanEntries()
+            ->with('recipe')
+            ->whereDate('planned_for', '>=', now()->startOfDay())
+            ->orderBy('planned_for')
+            ->take(7)
+            ->get();
+
+        return view('saved_recipes.index', compact('recipes', 'upcomingPlans'));
     }
 
     // Update an existing recipe

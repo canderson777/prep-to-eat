@@ -1,6 +1,9 @@
 <?php
 
+use App\Http\Controllers\ChatController;
+use App\Http\Controllers\MealPlanController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RecipeShareController;
 use App\Http\Controllers\SavedRecipeController;
 use App\Http\Controllers\SavedRecipeImportController;
 use App\Models\SavedRecipe;
@@ -156,6 +159,8 @@ Route::post('/recipes/save', [SavedRecipeController::class, 'store'])->name('rec
 Route::get('/my-recipes', [SavedRecipeController::class, 'index'])->name('recipes.index')->middleware('auth');
 Route::put('/recipes/{id}', [SavedRecipeController::class, 'update'])->name('recipes.update')->middleware('auth');
 Route::delete('/recipes/{id}', [SavedRecipeController::class, 'destroy'])->name('recipes.destroy')->middleware('auth');
+Route::post('/recipes/{recipe}/share', [RecipeShareController::class, 'store'])->name('recipes.share.store')->middleware('auth');
+Route::delete('/shares/{share}', [RecipeShareController::class, 'destroy'])->name('recipes.share.destroy')->middleware('auth');
 
 // Import saved recipes from guest/local (auth only)
 Route::post('/recipes/import-guest', [SavedRecipeImportController::class, 'import'])
@@ -172,10 +177,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::get('/meal-plan', [MealPlanController::class, 'index'])->name('meal-plan.index');
+    Route::post('/meal-plan', [MealPlanController::class, 'store'])->name('meal-plan.store');
+    Route::delete('/meal-plan/{entry}', [MealPlanController::class, 'destroy'])->name('meal-plan.destroy');
 });
 
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::get('/share/{token}', [RecipeShareController::class, 'show'])->name('recipes.share.show');
+Route::post('/chat/ask', [ChatController::class, 'respond'])->name('chat.respond');
 
 require __DIR__.'/auth.php';

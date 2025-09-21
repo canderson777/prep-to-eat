@@ -52,4 +52,14 @@ class User extends Authenticatable
         // Use the full namespace to avoid any import issues
         return $this->hasMany(\App\Models\SavedRecipe::class);
     }
+
+    public function mealPlanEntries()
+    {
+        return $this->hasMany(\App\Models\MealPlanEntry::class);
+    }
+
+    public function recipeShares()
+    {
+        return $this->hasMany(\App\Models\RecipeShare::class);
+    }
 }
