@@ -154,6 +154,7 @@ Route::post('/recipe/ask', function (Request $request) {
 // =========== RECIPE ROUTES ============= //
 Route::post('/recipes/save', [SavedRecipeController::class, 'store'])->name('recipes.save')->middleware('auth');
 Route::get('/my-recipes', [SavedRecipeController::class, 'index'])->name('recipes.index')->middleware('auth');
+Route::put('/recipes/{id}', [SavedRecipeController::class, 'update'])->name('recipes.update')->middleware('auth');
 Route::delete('/recipes/{id}', [SavedRecipeController::class, 'destroy'])->name('recipes.destroy')->middleware('auth');
 
 // Import saved recipes from guest/local (auth only)
