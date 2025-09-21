@@ -1,144 +1,138 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>PrepToEat - AI Recipe Assistant</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 40px; background: #f8fafc; }
-        .container { max-width: 500px; margin: auto; background: #fff; border-radius: 8px; box-shadow: 0 0 10px #ddd; padding: 24px;}
-        h1 { text-align: center; color: #333; }
-        textarea { width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #ccc; resize: vertical;}
-        button { background: #38b6ff; color: #fff; border: none; padding: 12px 24px; border-radius: 4px; font-size: 16px; cursor: pointer;}
-        button:hover { background: #109cff; }
-        .output { margin-top: 30px; padding: 28px 22px; background: #e3f5ff; border-radius: 6px;}
-        .ai-recipe-output strong { color: #007bff; font-size: 1.07em; display: block; margin-top: 22px; margin-bottom: 8px; }
-        .ai-recipe-output ul, .ai-recipe-output ol { margin-left: 22px; margin-bottom: 16px; }
-        .recipe-title { font-size: 1.7em; color: #1c1c1c; margin-bottom: 10px; margin-top: 0; font-weight: bold; letter-spacing: 0.01em; }
-        #spinner { display: none; text-align: center; margin-top: 20px; }
-        .spin { border: 6px solid #f3f3f3; border-top: 6px solid #38b6ff; border-radius: 50%; width: 36px; height: 36px; animation: spin 1s linear infinite; margin: 0 auto 8px auto; }
-        @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
-        .save-btn { background:#28b76b;color:#fff;padding:10px 18px;border-radius:4px;border:none;font-size:16px;cursor:pointer; margin-top: 16px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <!-- Auth Navigation -->
-        <div style="text-align:right; margin-bottom:12px;">
-            @auth
-                <a href="{{ route('recipes.index') }}" style="color:#007bff;">My Recipes</a> |
-                <span>Welcome, {{ Auth::user()->name }} |</span>
-                <form action="{{ route('logout') }}" method="POST" style="display:inline;">
-                    @csrf
-                    <button type="submit" style="background:none;border:none;color:#007bff;cursor:pointer;">Logout</button>
-                </form>
-            @else
-                <a href="{{ route('login') }}" style="color:#007bff;">Login</a> |
-                <a href="{{ route('register') }}" style="color:#007bff;">Register</a> |
-                <a href="{{ route('recipes.local') }}" style="color:#007bff;">My Local Recipes</a> |
-                <span>Saved locally: <strong id="local-count">0</strong>/4</span>
-            @endauth
-        </div>
+@extends('layouts.site')
 
-        @auth
-            <div id="importBanner" style="display:none; margin:12px 0; padding:10px 14px; background:#e6ffe7; border-left:5px solid #28b76b; border-radius:6px;">
-              We found <strong><span id="importCount">0</span></strong> recipes saved locally.
-              <button id="importBtn" style="margin-left:8px; background:#28b76b; color:#fff; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">
-                Import to my account
-              </button>
-              <button id="dismissImport" style="margin-left:6px; background:#e5e7eb; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">
-                Not now
-              </button>
+@section('title', 'PrepToEat · AI Recipe Assistant')
+
+@section('content')
+<div class="content-shell">
+    <div class="page-header">
+        <h1 class="page-title">AI-crafted recipes, ready for dinner tonight</h1>
+        <p class="page-subtitle">Paste any recipe URL or ingredient list and let PrepToEat turn it into a beautifully organized set of ingredients, instructions, and personal notes you can save for later.</p>
+        @guest
+            <div class="stat-pill" style="margin-top: 1.25rem;">
+                <span>Local saves used:</span>
+                <strong id="local-count">0</strong>
+                <span>/ 4</span>
             </div>
+        @endguest
+    </div>
 
-            <script>
-            (function () {
-              const KEY = 'guestRecipes';
-              const SEEN = 'import_banner_dismissed';
+    @auth
+        <div id="importBanner" class="notice-banner">
+            We found <strong><span id="importCount">0</span></strong> recipes saved locally.
+            <button id="importBtn" class="btn btn-success btn-small" type="button">Import to my account</button>
+            <button id="dismissImport" class="btn btn-secondary btn-small" type="button">Not now</button>
+        </div>
+    @endauth
 
-              function getGuestRecipes(){ try{return JSON.parse(localStorage.getItem(KEY))||[]}catch{return[]}}
-              const list = getGuestRecipes();
-              if (!list.length || localStorage.getItem(SEEN)==='1') return;
-
-              const b=document.getElementById('importBanner');
-              const c=document.getElementById('importCount');
-              const btn=document.getElementById('importBtn');
-              const dis=document.getElementById('dismissImport');
-              if(!b||!c||!btn||!dis) return;
-
-              c.textContent = list.length;
-              b.style.display = 'block';
-
-              btn.addEventListener('click', async () => {
-                try {
-                  const res = await fetch("{{ route('recipes.import') }}", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                      "X-CSRF-TOKEN": "{{ csrf_token() }}"
-                    },
-                    body: JSON.stringify({ recipes: list })
-                  });
-                  if (!res.ok) throw new Error('Import failed');
-
-                  localStorage.removeItem(KEY);
-                  localStorage.removeItem('free_uses'); // reset your guest limit
-                  alert('Imported! Your recipes are now in your account.');
-                  window.location.href = "{{ route('recipes.index') }}";
-                } catch (e) {
-                  alert('Could not import. Please try again.');
-                }
-              });
-
-              dis.addEventListener('click', () => {
-                localStorage.setItem(SEEN, '1');
-                b.style.display = 'none';
-              });
-            })();
-            </script>
-        @endauth
-
-        <h1>PrepToEat</h1>
-
-        <!-- Spinner Loader -->
-        <div id="spinner">
-            <div class="spin"></div>
-            <span>Loading...</span>
+    <div class="two-column">
+        <div class="card">
+            <h2 style="margin-top:0; font-size:1.4rem; margin-bottom:1.1rem;">Tell us what you'd like to cook</h2>
+            <form method="POST" action="{{ url('/recipe') }}" id="recipeForm" enctype="multipart/form-data" novalidate>
+                @csrf
+                <div class="form-group">
+                    <label for="recipe_link">Paste your recipe link or text</label>
+                    <textarea name="recipe_link" id="recipe_link" rows="6" placeholder="Paste recipe URL or text here..." required></textarea>
+                </div>
+                <div class="card-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 4.5h13.5M3 9h9M3 13.5h9M3 18h13.5M16.5 15L21 10.5l-4.5-4.5" />
+                        </svg>
+                        Get Recipe
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="refreshBtn">Refresh</button>
+                </div>
+                <div id="spinner" class="loading-indicator" role="status" aria-live="polite">
+                    <div class="spinner"></div>
+                    <span>Fetching recipe&hellip;</span>
+                </div>
+            </form>
         </div>
 
-        <!-- Recipe Form -->
-        <form method="POST" action="{{ url('/recipe') }}" id="recipeForm" enctype="multipart/form-data" novalidate>
-            @csrf
-            <label for="recipe_link">Paste your recipe link or text below:</label><br>
-            <textarea name="recipe_link" id="recipe_link" rows="6" placeholder="Paste recipe URL or text here..." required></textarea><br><br>
-            <input type="submit" value="Get Recipe" onclick="document.getElementById('spinner').style.display = 'block';" style="background: #38b6ff; color: #fff; border: none; padding: 12px 24px; border-radius: 4px; font-size: 16px; cursor: pointer;">
-            <button type="button" onclick="window.location.href='/?clear=1'" style="margin-left:12px;">Refresh</button>
-        </form>
+        <div class="card">
+            @php
+                $recipe = session('recipe');
+                $title = session('title');
+                $ingredients = session('ingredients');
+                $instructions = session('instructions');
+                $summary = session('summary');
 
-        
+                $ingredientLines = array_values(array_filter(array_map('trim', preg_split('/\r?\n/', (string) ($ingredients ?? '')))));
+                $instructionSteps = array_values(array_filter(array_map('trim', preg_split('/\r?\n/', (string) ($instructions ?? '')))));
+                $summaryText = trim((string) ($summary ?? ''));
+            @endphp
 
-        <!-- Output Result + Save Recipe -->
-        @php
-            $recipe = session('recipe');
-            $title = session('title');
-            $ingredients = session('ingredients');
-            $instructions = session('instructions');
-            $summary = session('summary');
-        @endphp
+            @if($recipe && ($title || count($ingredientLines) || count($instructionSteps)))
+                <header style="margin-bottom: 1.25rem;">
+                    <p class="badge" style="margin-bottom:0.5rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 8.25c0-.621.504-1.125 1.125-1.125h15.75c.621 0 1.125.504 1.125 1.125v7.5c0 .621-.504 1.125-1.125 1.125H4.125A1.125 1.125 0 013 15.75v-7.5z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 6V4.875A1.125 1.125 0 017.125 3.75h9.75A1.125 1.125 0 0118 4.875V6" />
+                        </svg>
+                        AI Recipe Result
+                    </p>
+                    @if($title)
+                        <h2 class="recipe-title" style="font-size:1.6rem;">{{ $title }}</h2>
+                    @endif
+                </header>
 
-        @if($recipe)
-            <div class="output">
-                <h2>Your Recipe:</h2>
-                <div class="ai-recipe-output">{!! $recipe !!}</div>
+                <section class="recipe-section">
+                    <div class="section-title">
+                        <span class="icon-circle">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 4.5h-3a2.25 2.25 0 00-2.25 2.25v3m5.25-5.25h9m0 0h3a2.25 2.25 0 012.25 2.25v3m-5.25-5.25v15m0 0h-9m9 0h3a2.25 2.25 0 002.25-2.25v-3m-14.25 5.25h-3A2.25 2.25 0 012.25 18v-3m0-6v9" />
+                            </svg>
+                        </span>
+                        Ingredients
+                    </div>
+                    <ul>
+                        @foreach($ingredientLines as $item)
+                            <li>{{ $item }}</li>
+                        @endforeach
+                    </ul>
+                </section>
+
+                <section class="recipe-section">
+                    <div class="section-title">
+                        <span class="icon-circle">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.862 4.487zm0 0L19.5 7.125" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M18 13.5V21" />
+                            </svg>
+                        </span>
+                        Instructions
+                    </div>
+                    <ol>
+                        @foreach($instructionSteps as $step)
+                            <li>{{ $step }}</li>
+                        @endforeach
+                    </ol>
+                </section>
+
+                @if($summaryText !== '')
+                    <section class="recipe-section">
+                        <div class="section-title">
+                            <span class="icon-circle">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 9.75L9 12l2.25 2.25m3-4.5L12 12l2.25 2.25M3.75 6h16.5M3.75 9.75h16.5M3.75 13.5h16.5M3.75 17.25h16.5" />
+                                </svg>
+                            </span>
+                            Personal Notes
+                        </div>
+                        <div class="note-box">{{ $summaryText }}</div>
+                    </section>
+                @endif
 
                 @auth
-                    <form id="saveRecipeForm" action="{{ route('recipes.save') }}" method="POST" enctype="multipart/form-data">
+                    <form id="saveRecipeForm" action="{{ route('recipes.save') }}" method="POST" enctype="multipart/form-data" style="margin-top: 1.5rem;">
                         @csrf
                         <input type="hidden" name="title" value="{{ $title ?? '' }}">
                         <input type="hidden" name="ingredients" value="{{ $ingredients ?? '' }}">
                         <input type="hidden" name="instructions" value="{{ $instructions ?? '' }}">
                         <input type="hidden" name="summary" value="{{ $summary ?? '' }}">
-                        <div style="margin:14px 0;">
-                            <label for="category"><strong>Category:</strong></label>
-                            <select name="category" id="category" style="padding:6px; border-radius:4px; border:1px solid #ccc; margin-right:8px;">
+                        <div class="form-group" style="margin-bottom:1.25rem;">
+                            <label for="category"><strong>Category</strong></label>
+                            <select name="category" id="category">
                                 <option value="">Select a category</option>
                                 <option value="Breakfast">Breakfast</option>
                                 <option value="Lunch">Lunch</option>
@@ -149,35 +143,28 @@
                                 <option value="Beverage">Beverage</option>
                                 <option value="other">Other</option>
                             </select>
-                            <input type="text" name="custom_category" id="custom_category" placeholder="Or enter custom category" style="padding:6px; border-radius:4px; border:1px solid #ccc; display:none;">
+                            <input type="text" name="custom_category" id="custom_category" placeholder="Or enter a custom category" class="input-control" style="margin-top:0.75rem; display:none;">
                             @error('category')
-                                <div style="color: #dc2626; font-size: 0.875rem; margin-top: 0.5rem;">{{ $message }}</div>
+                                <div class="field-error">{{ $message }}</div>
                             @enderror
                             @error('custom_category')
-                                <div style="color: #dc2626; font-size: 0.875rem; margin-top: 0.5rem;">{{ $message }}</div>
+                                <div class="field-error">{{ $message }}</div>
                             @enderror
                         </div>
-                        <button type="submit" class="save-btn">Save Recipe</button>
+                        <div class="card-actions">
+                            <button type="submit" class="btn btn-success">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                Save Recipe
+                            </button>
+                        </div>
                     </form>
-                    <script>
-                        document.getElementById('category').addEventListener('change', function() {
-                            const customCategoryInput = document.getElementById('custom_category');
-                            if (this.value === 'other') {
-                                customCategoryInput.style.display = 'inline-block';
-                                customCategoryInput.required = true;
-                            } else {
-                                customCategoryInput.style.display = 'none';
-                                customCategoryInput.required = false;
-                            }
-                        });
-                    </script>
-
-                    
                 @else
-                    <div style="margin-top:12px;">
-                        <div style="margin:14px 0;">
-                            <label for="guest_category"><strong>Category:</strong></label>
-                            <select id="guest_category" style="padding:6px; border-radius:4px; border:1px solid #ccc; margin-right:8px;">
+                    <div style="margin-top: 1.75rem;">
+                        <div class="form-group" style="margin-bottom:1.25rem;">
+                            <label for="guest_category"><strong>Category</strong></label>
+                            <select id="guest_category">
                                 <option value="">Select a category</option>
                                 <option value="Breakfast">Breakfast</option>
                                 <option value="Lunch">Lunch</option>
@@ -188,285 +175,184 @@
                                 <option value="Beverage">Beverage</option>
                                 <option value="other">Other</option>
                             </select>
-                            <input type="text" id="guest_custom_category" placeholder="Or enter custom category" style="padding:6px; border-radius:4px; border:1px solid #ccc; display:none;">
+                            <input type="text" id="guest_custom_category" placeholder="Or enter a custom category" class="input-control" style="margin-top:0.75rem; display:none;">
                         </div>
-                        <button type="button" class="save-btn" id="guestSaveBtn">Save Locally</button>
-                        <div id="guestSaveMsg" style="display:none; color:#065f46; margin-top:8px;">Saved to your browser.</div>
-                        <div style="margin-top:12px;">
-                            Create an account to sync your saved recipes later: 
-                            <a href="{{ route('register') }}" style="color:#007bff;">Register</a> or
-                            <a href="{{ route('login') }}" style="color:#007bff;">Login</a>
-                        </div>
+                        <button type="button" class="btn btn-success" id="guestSaveBtn">Save locally</button>
+                        <div id="guestSaveMsg" style="display:none; color:#166534; font-weight:600; margin-top:0.65rem;">Saved to your browser.</div>
+                        <p style="margin-top:1.25rem; color: var(--text-muted); font-size:0.95rem;">
+                            Create an account to sync your saved recipes later:
+                            <a class="muted-link" href="{{ route('register') }}">Register</a> or
+                            <a class="muted-link" href="{{ route('login') }}">Login</a>.
+                        </p>
                     </div>
-                    <script>
-                        (function() {
-                            const STORAGE_KEY = 'guestRecipes';
-                            const MAX_GUEST_RECIPES = 4;
-                            const LIMIT_MESSAGE = 'Limit reached. Register or log in to save more.';
-
-                            const guestCategorySelect = document.getElementById('guest_category');
-                            const guestCustomCategoryInput = document.getElementById('guest_custom_category');
-                            const guestSaveBtn = document.getElementById('guestSaveBtn');
-                            const guestSaveMsg = document.getElementById('guestSaveMsg');
-                            const countEl = document.getElementById('local-count');
-
-                            function sanitizeRecipes(list) {
-                                if (!Array.isArray(list)) return [];
-                                const nowIso = new Date().toISOString();
-                                const deduped = [];
-                                const seen = new Set();
-
-                                for (const item of list) {
-                                    if (!item || typeof item !== 'object') continue;
-                                    const recipe = Object.assign({}, item);
-                                    if (!recipe.id) {
-                                        const fallbackId = 'gr_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-                                        recipe.id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : fallbackId;
-                                    }
-                                    if (!recipe.savedAt) {
-                                        recipe.savedAt = nowIso;
-                                    }
-                                    if (seen.has(recipe.id)) continue;
-                                    seen.add(recipe.id);
-                                    deduped.push(recipe);
-                                }
-
-                                deduped.sort(function(a, b) {
-                                    return new Date(a.savedAt).getTime() - new Date(b.savedAt).getTime();
-                                });
-
-                                if (deduped.length > MAX_GUEST_RECIPES) {
-                                    deduped.splice(0, deduped.length - MAX_GUEST_RECIPES);
-                                }
-
-                                return deduped;
-                            }
-
-                            function getStoredRecipes() {
-                                try {
-                                    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-                                    const sanitized = sanitizeRecipes(parsed);
-                                    localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
-                                    return sanitized;
-                                } catch (error) {
-                                    return [];
-                                }
-                            }
-
-                            function saveRecipes(list) {
-                                const sanitized = sanitizeRecipes(list);
-                                localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
-                                return sanitized;
-                            }
-
-                            function updateUiForCount(count) {
-                                if (countEl) {
-                                    countEl.textContent = count;
-                                }
-
-                                if (!guestSaveBtn) return;
-
-                                if (count >= MAX_GUEST_RECIPES) {
-                                    guestSaveBtn.disabled = true;
-                                    guestSaveBtn.style.opacity = '0.6';
-                                    guestSaveBtn.style.cursor = 'not-allowed';
-                                    if (guestSaveMsg) {
-                                        guestSaveMsg.dataset.state = 'limit';
-                                        guestSaveMsg.style.display = 'block';
-                                        guestSaveMsg.style.color = '#b91c1c';
-                                        guestSaveMsg.textContent = LIMIT_MESSAGE;
-                                    }
-                                } else {
-                                    guestSaveBtn.disabled = false;
-                                    guestSaveBtn.style.opacity = '';
-                                    guestSaveBtn.style.cursor = '';
-                                    if (guestSaveMsg && guestSaveMsg.dataset.state === 'limit') {
-                                        guestSaveMsg.style.display = 'none';
-                                        guestSaveMsg.textContent = '';
-                                        guestSaveMsg.dataset.state = '';
-                                    }
-                                }
-                            }
-
-                            if (guestCategorySelect) {
-                                guestCategorySelect.addEventListener('change', function() {
-                                    if (this.value === 'other') {
-                                        guestCustomCategoryInput.style.display = 'inline-block';
-                                        guestCustomCategoryInput.required = true;
-                                    } else {
-                                        guestCustomCategoryInput.style.display = 'none';
-                                        guestCustomCategoryInput.required = false;
-                                    }
-                                });
-                            }
-
-                            if (guestSaveMsg) {
-                                guestSaveMsg.style.display = 'none';
-                                guestSaveMsg.textContent = '';
-                                guestSaveMsg.dataset.state = '';
-                            }
-
-                            const initialRecipes = getStoredRecipes();
-                            updateUiForCount(initialRecipes.length);
-
-                            if (!guestSaveBtn) {
-                                return;
-                            }
-
-                            guestSaveBtn.addEventListener('click', function() {
-                                try {
-                                    const baseRecipe = {
-                                        title: @json($title ?? ''),
-                                        ingredients: @json($ingredients ?? ''),
-                                        instructions: @json($instructions ?? ''),
-                                        summary: @json($summary ?? ''),
-                                    };
-
-                                    let chosenCategory = '';
-                                    if (guestCategorySelect) {
-                                        chosenCategory = guestCategorySelect.value === 'other'
-                                            ? (guestCustomCategoryInput.value || '').trim()
-                                            : guestCategorySelect.value;
-                                    }
-
-                                    const current = getStoredRecipes();
-                                    if (current.length >= MAX_GUEST_RECIPES) {
-                                        updateUiForCount(current.length);
-                                        return;
-                                    }
-
-                                    const recipeToSave = Object.assign({}, baseRecipe, {
-                                        category: chosenCategory || null,
-                                        savedAt: new Date().toISOString(),
-                                        id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('gr_' + Date.now())
-                                    });
-
-                                    const next = saveRecipes(current.concat(recipeToSave));
-
-                                    updateUiForCount(next.length);
-
-                                    if (guestSaveMsg && next.length < MAX_GUEST_RECIPES) {
-                                        guestSaveMsg.dataset.state = 'success';
-                                        guestSaveMsg.style.display = 'block';
-                                        guestSaveMsg.style.color = '#065f46';
-                                        guestSaveMsg.textContent = 'Saved! (' + next.length + ' of ' + MAX_GUEST_RECIPES + ')';
-                                    }
-                                } catch (e) {
-                                    alert('Could not save locally. Please ensure your browser allows local storage.');
-                                }
-                            });
-                        })();
-                    </script>
                 @endauth
-                
-                <!-- Q&A Section -->
-                <div id="qa" style="margin-top: 24px; padding-top: 12px; border-top: 1px solid #bfe6ff;">
-                    <h3 style="margin-bottom:10px;">Ask about this recipe</h3>
-                    @if(session('error'))
-                        <div style="background:#fdecea;color:#b71c1c;padding:10px;border-radius:4px;margin-bottom:10px;">{{ session('error') }}</div>
-                    @endif
-                    <form method="POST" action="{{ url('/recipe/ask') }}">
-                        @csrf
-                        <label for="question" style="display:block;margin-bottom:6px;">Your question (e.g., "Substitute for buttermilk?" or "Make it gluten-free?")</label>
-                        <textarea id="question" name="question" rows="3" placeholder="Type your question here..." required style="width:100%;padding:10px;border-radius:4px;border:1px solid #ccc;"></textarea>
-                        @error('question')
-                            <div style="color:#dc2626;margin-top:6px;">{{ $message }}</div>
-                        @enderror
-                        <div style="margin-top:10px;">
-                            <button type="submit">Ask</button>
-                        </div>
-                    </form>
-
-                    @php
-                        $qaQuestion = session('qa_question');
-                        $qaAnswer = session('qa_answer');
-                    @endphp
-                    @if(!empty($qaAnswer))
-                        <div style="margin-top:16px;background:#fff;border:1px solid #cfe9ff;border-radius:6px;padding:12px;">
-                            <div style="color:#555;font-size:0.95em;margin-bottom:6px;"><strong>You asked:</strong> {{ $qaQuestion }}</div>
-                            <div style="white-space:pre-wrap;">{{ $qaAnswer }}</div>
-                        </div>
-                    @endif
+            @else
+                <div class="empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 6.75l7.5-3 7.5 3m-15 0l7.5 3 7.5-3m-15 0V17.25a2.25 2.25 0 001.344 2.07l6.375 2.85c.52.232 1.098.232 1.618 0l6.375-2.85A2.25 2.25 0 0019.5 17.25V6.75m-15 0L12 9.75" />
+                    </svg>
+                    <div>
+                        Paste a recipe link or describe your ingredients to get started. We'll organize everything for you.
+                    </div>
                 </div>
-            </div>
-        @endif
+            @endif
+        </div>
     </div>
-    <script>
-        (function() {
-            const STORAGE_KEY = 'guestRecipes';
-            const MAX_GUEST_RECIPES = 4;
-            const LIMIT_MESSAGE = 'Limit reached. Register or log in to save more.';
+</div>
+@endsection
 
-            function sanitize(list) {
-                if (!Array.isArray(list)) return [];
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const recipeForm = document.getElementById('recipeForm');
+        const spinner = document.getElementById('spinner');
+        const refreshBtn = document.getElementById('refreshBtn');
 
-                const nowIso = new Date().toISOString();
-                const deduped = [];
-                const seen = new Set();
+        if (recipeForm && spinner) {
+            recipeForm.addEventListener('submit', function () {
+                spinner.classList.add('is-visible');
+            });
+        }
 
-                for (const item of list) {
-                    if (!item || typeof item !== 'object') continue;
-                    const recipe = Object.assign({}, item);
-                    if (!recipe.id) {
-                        const fallbackId = 'gr_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-                        recipe.id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : fallbackId;
-                    }
-                    if (!recipe.savedAt) {
-                        recipe.savedAt = nowIso;
-                    }
-                    if (seen.has(recipe.id)) continue;
-                    seen.add(recipe.id);
-                    deduped.push(recipe);
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', function () {
+                window.location.href = '/?clear=1';
+            });
+        }
+
+        @auth
+        (function () {
+            const KEY = 'guestRecipes';
+            const SEEN = 'import_banner_dismissed';
+
+            function getGuestRecipes(){ try{return JSON.parse(localStorage.getItem(KEY))||[]}catch{return[]}}
+            const list = getGuestRecipes();
+            if (!list.length || localStorage.getItem(SEEN)==='1') return;
+
+            const b=document.getElementById('importBanner');
+            const c=document.getElementById('importCount');
+            const btn=document.getElementById('importBtn');
+            const dis=document.getElementById('dismissImport');
+            if(!b||!c||!btn||!dis) return;
+
+            c.textContent = list.length;
+            b.style.display = 'block';
+
+            btn.addEventListener('click', async () => {
+                try {
+                    const res = await fetch("{{ route('recipes.import') }}", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                        },
+                        body: JSON.stringify({ recipes: list })
+                    });
+                    if (!res.ok) throw new Error('Import failed');
+
+                    localStorage.removeItem(KEY);
+                    localStorage.removeItem('free_uses');
+                    alert('Imported! Your recipes are now in your account.');
+                    window.location.href = "{{ route('recipes.index') }}";
+                } catch (e) {
+                    alert('Could not import. Please try again.');
                 }
+            });
 
-                deduped.sort(function(a, b) {
-                    return new Date(a.savedAt).getTime() - new Date(b.savedAt).getTime();
-                });
+            dis.addEventListener('click', () => {
+                localStorage.setItem(SEEN, '1');
+                b.style.display = 'none';
+            });
+        })();
+        @endauth
 
-                if (deduped.length > MAX_GUEST_RECIPES) {
-                    deduped.splice(0, deduped.length - MAX_GUEST_RECIPES);
+        @auth
+        const categorySelect = document.getElementById('category');
+        const customCategoryInput = document.getElementById('custom_category');
+        if (categorySelect && customCategoryInput) {
+            categorySelect.addEventListener('change', function () {
+                if (this.value === 'other') {
+                    customCategoryInput.style.display = 'block';
+                    customCategoryInput.required = true;
+                    customCategoryInput.focus();
+                } else {
+                    customCategoryInput.style.display = 'none';
+                    customCategoryInput.required = false;
+                    customCategoryInput.value = '';
                 }
+            });
+        }
+        @endauth
 
-                return deduped;
+        @guest
+        (function () {
+            const KEY = 'guestRecipes';
+            const LIMIT = 4;
+            const saveBtn = document.getElementById('guestSaveBtn');
+            const guestCategory = document.getElementById('guest_category');
+            const guestCustom = document.getElementById('guest_custom_category');
+            const message = document.getElementById('guestSaveMsg');
+            const count = document.getElementById('local-count');
+
+            function getGuestRecipes(){ try{return JSON.parse(localStorage.getItem(KEY))||[]}catch{return[]}}
+            function setGuestRecipes(list){ localStorage.setItem(KEY, JSON.stringify(list)); }
+
+            function updateCount() {
+                if (!count) return;
+                const list = getGuestRecipes();
+                count.textContent = list.length;
             }
 
-            try {
-                const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-                const sanitized = sanitize(parsed);
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
-
-                const el = document.getElementById('local-count');
-                if (el) el.textContent = sanitized.length;
-
-                const guestSaveBtn = document.getElementById('guestSaveBtn');
-                if (!guestSaveBtn) return;
-
-                const msg = document.getElementById('guestSaveMsg');
-
-                if (sanitized.length >= MAX_GUEST_RECIPES) {
-                    guestSaveBtn.disabled = true;
-                    guestSaveBtn.style.opacity = '0.6';
-                    guestSaveBtn.style.cursor = 'not-allowed';
-                    guestSaveBtn.title = LIMIT_MESSAGE;
-                    if (msg) {
-                        msg.dataset.state = 'limit';
-                        msg.style.display = 'block';
-                        msg.style.color = '#b91c1c';
-                        msg.textContent = LIMIT_MESSAGE;
+            if (guestCategory && guestCustom) {
+                guestCategory.addEventListener('change', function () {
+                    if (this.value === 'other') {
+                        guestCustom.style.display = 'block';
+                        guestCustom.required = true;
+                        guestCustom.focus();
+                    } else {
+                        guestCustom.style.display = 'none';
+                        guestCustom.required = false;
+                        guestCustom.value = '';
                     }
-                } else {
-                    guestSaveBtn.disabled = false;
-                    guestSaveBtn.style.opacity = '';
-                    guestSaveBtn.style.cursor = '';
-                    guestSaveBtn.removeAttribute('title');
-                    if (msg && msg.dataset.state === 'limit') {
-                        msg.style.display = 'none';
-                        msg.textContent = '';
-                        msg.dataset.state = '';
+                });
+            }
+
+            if (saveBtn) {
+                saveBtn.addEventListener('click', function () {
+                    const list = getGuestRecipes();
+                    if (list.length >= LIMIT) {
+                        alert('Local storage is limited to four recipes. Delete one to save another.');
+                        return;
                     }
-                }
-            } catch (e) { /* ignore */ }
+
+                    const recipe = {
+                        id: 'gr_' + Date.now() + '_' + Math.random().toString(36).slice(2),
+                        title: @json($title ?? ''),
+                        ingredients: @json($ingredients ?? ''),
+                        instructions: @json($instructions ?? ''),
+                        summary: @json($summary ?? ''),
+                        category: guestCategory ? (guestCategory.value === 'other' ? guestCustom.value : guestCategory.value) : '',
+                        savedAt: new Date().toISOString()
+                    };
+
+                    if (!recipe.title && !recipe.ingredients && !recipe.instructions) {
+                        alert('Generate a recipe before saving.');
+                        return;
+                    }
+
+                    list.push(recipe);
+                    setGuestRecipes(list);
+                    updateCount();
+                    if (message) {
+                        message.style.display = 'block';
+                        setTimeout(() => message.style.display = 'none', 2500);
+                    }
+                });
+            }
+
+            updateCount();
         })();
-    </script>
-</body>
-</html>
+        @endguest
+    });
+</script>
+@endpush
