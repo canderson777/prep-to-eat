@@ -172,7 +172,38 @@
                         });
                     </script>
 
-                    
+                    @php
+                        $userRecipes = Auth::user()->savedRecipes()->orderBy('title')->get();
+                        $selectedRecipeId = optional($userRecipes->firstWhere('title', $title ?? ''))->id;
+                    @endphp
+                    <div style="margin-top:16px; padding:16px; background:#f0f9ff; border:1px solid #cbe9ff; border-radius:8px;">
+                        <button type="button" id="togglePlanForm" style="background:#2563eb; padding:10px 18px; border-radius:4px; border:none; color:#fff; cursor:pointer;">Add to Calendar</button>
+                        <form id="planForm" action="{{ route('meal-plan.store') }}" method="POST" style="display:none; margin-top:12px;">
+                            @csrf
+                            <label for="plan_recipe_id" style="display:block; margin-bottom:6px; font-weight:bold; color:#1e3a8a;">Choose a saved recipe</label>
+                            <select id="plan_recipe_id" name="saved_recipe_id" required style="width:100%; padding:8px; border:1px solid #93c5fd; border-radius:6px; margin-bottom:10px;">
+                                <option value="">Select from your cookbook</option>
+                                @foreach($userRecipes as $saved)
+                                    <option value="{{ $saved->id }}" {{ $selectedRecipeId === $saved->id ? 'selected' : '' }}>{{ $saved->title }}</option>
+                                @endforeach
+                            </select>
+                            <label for="plan_date" style="display:block; margin-bottom:6px; font-weight:bold; color:#1e3a8a;">Date</label>
+                            <input type="date" id="plan_date" name="planned_for" required style="width:100%; padding:8px; border:1px solid #93c5fd; border-radius:6px; margin-bottom:10px;">
+                            <label for="plan_slot" style="display:block; margin-bottom:6px; font-weight:bold; color:#1e3a8a;">Meal slot</label>
+                            <select id="plan_slot" name="meal_type" style="width:100%; padding:8px; border:1px solid #93c5fd; border-radius:6px; margin-bottom:10px;">
+                                <option value="">Anytime</option>
+                                <option value="Breakfast">Breakfast</option>
+                                <option value="Lunch">Lunch</option>
+                                <option value="Dinner">Dinner</option>
+                                <option value="Snack">Snack</option>
+                            </select>
+                            <textarea name="notes" rows="3" placeholder="Optional notes (shopping list, prep reminders)" style="width:100%; padding:8px; border:1px solid #93c5fd; border-radius:6px; margin-bottom:10px;"></textarea>
+                            <button type="submit" style="background:#22c55e; color:#fff; padding:10px 18px; border:none; border-radius:4px; cursor:pointer;">Schedule Meal</button>
+                            <p style="font-size:0.85em; color:#475569; margin-top:8px;">Recipe not showing? Save it first, then refresh this page.</p>
+                        </form>
+                    </div>
+
+
                 @else
                     <div style="margin-top:12px;">
                         <div style="margin:14px 0;">
@@ -390,6 +421,17 @@
                 </div>
             </div>
         @endif
+        <div style="margin-top:32px; padding:20px; background:#f0f9ff; border:1px solid #cbe9ff; border-radius:10px;">
+            <h2 style="margin-top:0; color:#2563eb;">Need cooking help?</h2>
+            <div id="homeChatLog" style="background:#fff; border:1px solid #dbeafe; border-radius:8px; padding:12px; max-height:220px; overflow-y:auto; margin-bottom:12px;" aria-live="polite"></div>
+            <form id="homeChatForm">
+                @csrf
+                <label for="homeChatMessage" style="display:block; font-weight:bold; color:#1e3a8a; margin-bottom:6px;">Ask PrepToEat anything</label>
+                <textarea id="homeChatMessage" name="message" rows="3" placeholder="Ask about substitutions, techniques, or how to use ingredients..." style="width:100%; padding:10px; border:1px solid #93c5fd; border-radius:6px; margin-bottom:10px;"></textarea>
+                <input type="text" id="homeChatIngredients" name="ingredients" placeholder="Optional: ingredients you have" style="width:100%; padding:8px; border:1px solid #93c5fd; border-radius:6px; margin-bottom:10px;">
+                <button type="submit" style="background:#2563eb; color:#fff; padding:10px 18px; border:none; border-radius:4px; cursor:pointer;">Ask the Assistant</button>
+            </form>
+        </div>
     </div>
     <script>
         (function() {
@@ -466,6 +508,78 @@
                     }
                 }
             } catch (e) { /* ignore */ }
+        })();
+    </script>
+    <script>
+        (function() {
+            const toggle = document.getElementById('togglePlanForm');
+            const form = document.getElementById('planForm');
+            if (!toggle || !form) return;
+            toggle.addEventListener('click', function() {
+                const isHidden = form.style.display === 'none' || form.style.display === '';
+                form.style.display = isHidden ? 'block' : 'none';
+            });
+        })();
+
+        (function() {
+            const form = document.getElementById('homeChatForm');
+            const log = document.getElementById('homeChatLog');
+            if (!form || !log) return;
+
+            form.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                const messageInput = document.getElementById('homeChatMessage');
+                const ingredientInput = document.getElementById('homeChatIngredients');
+                if (!messageInput) return;
+                const message = (messageInput.value || '').trim();
+                const ingredients = ingredientInput ? (ingredientInput.value || '').trim() : '';
+                if (!message) {
+                    return;
+                }
+
+                appendEntry('You', message);
+                messageInput.value = '';
+                if (ingredientInput) {
+                    ingredientInput.value = '';
+                }
+
+                const tokenInput = form.querySelector('input[name="_token"]');
+
+                try {
+                    const response = await fetch("{{ route('chat.respond') }}", {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': tokenInput ? tokenInput.value : '',
+                            'Accept': 'application/json'
+                        },
+                        body: new URLSearchParams({ message, ingredients })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Bad response');
+                    }
+
+                    const data = await response.json();
+                    appendEntry('PrepToEat', data.reply || 'I\'m not sure how to help with that.');
+                } catch (error) {
+                    appendEntry('PrepToEat', 'The assistant is unavailable right now. Please try again soon.');
+                }
+            });
+
+            function appendEntry(author, text) {
+                const wrapper = document.createElement('div');
+                wrapper.style.marginBottom = '10px';
+                const title = document.createElement('strong');
+                title.textContent = author;
+                title.style.display = 'block';
+                title.style.color = '#1e3a8a';
+                const body = document.createElement('div');
+                body.textContent = text;
+                wrapper.appendChild(title);
+                wrapper.appendChild(body);
+                log.appendChild(wrapper);
+                log.scrollTop = log.scrollHeight;
+            }
         })();
     </script>
 </body>
