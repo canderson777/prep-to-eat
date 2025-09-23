@@ -223,7 +223,6 @@ git commit -m "Your commit message here"
 git push
 
 # Start development server
-cd C:\Users\Jay\Documents\PreptoEat\preptoeat
 php artisan serve
 
 # For mobile testing (network access)
@@ -261,7 +260,7 @@ Here are some example recipe URLs you can test with the AI extraction feature:
 - **Current Version**: 2.0 (Meal Planning & Sharing Update)
 - **Active Branch**: `codex/integrate-meal-planning-calendar-ui`
 - **Last Updated**: September 2025
-- **Status**: ✅ Production Ready
-- **Mobile Responsive**: ✅ Fully Tested
+- **Status**: Testing
+- **Mobile Responsive**:  Testing
 - **Database**: ✅ All Migrations Applied
 
