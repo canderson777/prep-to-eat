@@ -63,44 +63,44 @@ PrepToEat is an intelligent recipe management system built with Laravel that lev
 ### Installation
 
 1. **Clone the repository**
-   ```bash
+   \`\`\`bash
    git clone https://github.com/your-username/preptoeat.git
    cd preptoeat
-   ```
+   \`\`\`
 
 2. **Install dependencies**
-   ```bash
+   \`\`\`bash
    composer install
    npm install
-   ```
+   \`\`\`
 
 3. **Environment setup**
-   ```bash
+   \`\`\`bash
    cp .env.example .env
    php artisan key:generate
-   ```
+   \`\`\`
 
 4. **Configure your .env file**
-   ```env
+   \`\`\`env
    DB_CONNECTION=sqlite
    DB_DATABASE=database/database.sqlite
    OPENAI_API_KEY=your_openai_api_key_here
-   ```
+   \`\`\`
 
 5. **Run migrations**
-   ```bash
+   \`\`\`bash
    php artisan migrate
-   ```
+   \`\`\`
 
 6. **Build assets**
-   ```bash
+   \`\`\`bash
    npm run dev
-   ```
+   \`\`\`
 
 7. **Start the server**
-   ```bash
+   \`\`\`bash
    php artisan serve
-   ```
+   \`\`\`
 
 8. **Access the application**
    Open your browser and navigate to `http://localhost:8000`
@@ -166,13 +166,13 @@ PrepToEat is an intelligent recipe management system built with Laravel that lev
 
 ## 🧪 Testing
 
-```bash
+\`\`\`bash
 # Run PHP tests
 php artisan test
 
 # Run with coverage
 php artisan test --coverage
-```
+\`\`\`
 
 ## 📱 Mobile Testing
 
@@ -216,7 +216,7 @@ This project is open-sourced software licensed under the [MIT license](https://o
 
 ### Development Commands
 
-```bash
+\`\`\`bash
 # Save your work
 git add .
 git commit -m "Your commit message here"
@@ -233,7 +233,7 @@ php artisan migrate
 
 # Build frontend assets
 npm run dev
-```
+\`\`\`
 
 ## 🧪 Test Recipe URLs
 
@@ -263,4 +263,3 @@ Here are some example recipe URLs you can test with the AI extraction feature:
 - **Status**: Testing
 - **Mobile Responsive**:  Testing
 - **Database**: ✅ All Migrations Applied
-

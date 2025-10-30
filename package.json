@@ -1,20 +1,47 @@
 {
-    "private": true,
-    "type": "module",
-    "scripts": {
-        "build": "vite build",
-        "dev": "vite"
-    },
-    "devDependencies": {
-        "@tailwindcss/forms": "^0.5.2",
-        "@tailwindcss/vite": "^4.0.0",
-        "alpinejs": "^3.4.2",
-        "autoprefixer": "^10.4.2",
-        "axios": "^1.8.2",
-        "concurrently": "^9.0.1",
-        "laravel-vite-plugin": "^1.2.0",
-        "postcss": "^8.4.31",
-        "tailwindcss": "^3.1.0",
-        "vite": "^6.2.4"
-    }
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite"
+  },
+  "dependencies": {
+    "@radix-ui/react-tabs": "latest",
+    "@vercel/analytics": "latest",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "jiti": "latest",
+    "less": "latest",
+    "lightningcss": "latest",
+    "lucide-react": "^0.454.0",
+    "next": "16.0.1",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "sass": "latest",
+    "sass-embedded": "latest",
+    "stylus": "latest",
+    "sugarss": "latest",
+    "tailwind-merge": "^2.5.5",
+    "tailwindcss-animate": "^1.0.7",
+    "terser": "latest",
+    "tsx": "latest",
+    "tw-animate-css": "latest",
+    "yaml": "latest"
+  },
+  "devDependencies": {
+    "@tailwindcss/forms": "^0.5.2",
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/node": "^22",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
+    "alpinejs": "^3.4.2",
+    "autoprefixer": "^10.4.2",
+    "axios": "^1.8.2",
+    "concurrently": "^9.0.1",
+    "laravel-vite-plugin": "^1.2.0",
+    "postcss": "^8.5",
+    "tailwindcss": "^3.1.0",
+    "typescript": "^5",
+    "vite": "^6.2.4"
+  }
 }
