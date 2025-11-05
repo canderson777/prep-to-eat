@@ -105,6 +105,9 @@
         </div>
 
         <!-- Recipe Form -->
+        @if(session('error') && !session('recipe'))
+            <div style="background:#fdecea;color:#b71c1c;padding:10px;border-radius:4px;margin-bottom:10px;">{{ session('error') }}</div>
+        @endif
         <form method="POST" action="{{ url('/recipe') }}" id="recipeForm" enctype="multipart/form-data" novalidate>
             @csrf
             <label for="recipe_link">Paste your recipe link or text below:</label><br>
@@ -421,6 +424,8 @@
                 </div>
             </div>
         @endif
+
+        @if($recipe)
         <div style="margin-top:32px; padding:20px; background:#f0f9ff; border:1px solid #cbe9ff; border-radius:10px;">
             <h2 style="margin-top:0; color:#2563eb;">Need cooking help?</h2>
             <div id="homeChatLog" style="background:#fff; border:1px solid #dbeafe; border-radius:8px; padding:12px; max-height:220px; overflow-y:auto; margin-bottom:12px;" aria-live="polite"></div>
@@ -432,6 +437,7 @@
                 <button type="submit" style="background:#2563eb; color:#fff; padding:10px 18px; border:none; border-radius:4px; cursor:pointer;">Ask the Assistant</button>
             </form>
         </div>
+        @endif
     </div>
     <script>
         (function() {
