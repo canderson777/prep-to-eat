@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>My Saved Recipes | PrepToEat</title>
+    <title>My Kitchen | PrepToEat</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body { background: #f8fafc; font-family: Arial, sans-serif; margin: 0; }
@@ -63,7 +63,7 @@
             <a href="{{ url('/') }}" class="nav-link">Home</a>
             <a href="{{ route('meal-plan.index') }}" class="nav-link">Meal Plan</a>
         </div>
-        <h1>My Saved Recipes</h1>
+        <h1>My Kitchen</h1>
 
         @if(session('success'))
             <div style="margin-bottom: 22px; padding:10px 18px; background: #e6ffe7; border-left: 5px solid #28b76b; border-radius: 5px; color:#25754a;">

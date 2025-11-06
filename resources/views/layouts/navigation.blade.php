@@ -1,100 +1,76 @@
-<nav x-data="{ open: false }" class="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
-    <!-- Primary Navigation Menu -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
-            <div class="flex">
-                <!-- Logo -->
-                <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}">
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200" />
-                    </a>
-                </div>
+<nav x-data="{ open: false }" class="border-b border-emerald-100/80 bg-white/90 shadow-sm backdrop-blur">
+    <div class="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+        <div class="flex items-center gap-6">
+            <a href="{{ url('/') }}" class="flex items-center gap-3 text-emerald-700 transition hover:text-emerald-900">
+                <span class="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-100">
+                    <i class="fa-solid fa-seedling text-xl"></i>
+                </span>
+                <span class="text-lg font-semibold tracking-tight">PrepToEat</span>
+            </a>
 
-                <!-- Navigation Links -->
-                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                        {{ __('Dashboard') }}
-                    </x-nav-link>
-                </div>
-            </div>
-
-            <!-- Settings Dropdown -->
-            <div class="hidden sm:flex sm:items-center sm:ms-6">
-                <x-dropdown align="right" width="48">
-                    <x-slot name="trigger">
-                        <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
-                            <div>{{ Auth::user()->name }}</div>
-
-                            <div class="ms-1">
-                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                        </button>
-                    </x-slot>
-
-                    <x-slot name="content">
-                        <x-dropdown-link :href="route('profile.edit')">
-                            {{ __('Profile') }}
-                        </x-dropdown-link>
-
-                        <!-- Authentication -->
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-
-                            <x-dropdown-link :href="route('logout')"
-                                    onclick="event.preventDefault();
-                                                this.closest('form').submit();">
-                                {{ __('Log Out') }}
-                            </x-dropdown-link>
-                        </form>
-                    </x-slot>
-                </x-dropdown>
-            </div>
-
-            <!-- Hamburger -->
-            <div class="-me-2 flex items-center sm:hidden">
-                <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-900 focus:text-gray-500 dark:focus:text-gray-400 transition duration-150 ease-in-out">
-                    <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                        <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        <path :class="{'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+            <div class="hidden items-center gap-1 lg:flex">
+                <a href="{{ route('dashboard') }}" class="inline-flex items-center rounded-full px-4 py-2 text-sm font-medium transition {{ request()->routeIs('dashboard') ? 'bg-emerald-100 text-emerald-900' : 'text-emerald-700 hover:bg-emerald-50 hover:text-emerald-900' }}">Dashboard</a>
+                <a href="{{ route('recipes.catalog') }}" class="inline-flex items-center rounded-full px-4 py-2 text-sm font-medium transition {{ request()->routeIs('recipes.catalog') ? 'bg-emerald-100 text-emerald-900' : 'text-emerald-700 hover:bg-emerald-50 hover:text-emerald-900' }}">Recipes</a>
+                @auth
+                    <a href="{{ route('recipes.index') }}" class="inline-flex items-center rounded-full px-4 py-2 text-sm font-medium transition {{ request()->routeIs('recipes.index') ? 'bg-emerald-100 text-emerald-900' : 'text-emerald-700 hover:bg-emerald-50 hover:text-emerald-900' }}">My Kitchen</a>
+                    <a href="{{ route('meal-plan.index') }}" class="inline-flex items-center rounded-full px-4 py-2 text-sm font-medium transition {{ request()->routeIs('meal-plan.*') ? 'bg-emerald-100 text-emerald-900' : 'text-emerald-700 hover:bg-emerald-50 hover:text-emerald-900' }}">Meal Planner</a>
+                @else
+                    <a href="{{ route('login') }}" class="inline-flex items-center rounded-full px-4 py-2 text-sm font-medium text-emerald-700 transition hover:bg-emerald-50 hover:text-emerald-900">My Kitchen</a>
+                    <a href="{{ route('login') }}" class="inline-flex items-center rounded-full px-4 py-2 text-sm font-medium text-emerald-700 transition hover:bg-emerald-50 hover:text-emerald-900">Meal Planner</a>
+                @endauth
             </div>
         </div>
+
+        <div class="hidden items-center gap-4 lg:flex">
+            @auth
+                <div class="text-right">
+                    <p class="text-sm font-semibold text-emerald-900">{{ Auth::user()->name }}</p>
+                    <p class="text-xs text-emerald-700/80">Fueling smart meals</p>
+                </div>
+                <form method="POST" action="{{ route('logout') }}" class="m-0">
+                    @csrf
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                        Log out
+                    </button>
+                </form>
+            @else
+                <a href="{{ route('login') }}" class="text-sm font-semibold text-emerald-900 hover:text-emerald-700">Log in</a>
+                <a href="{{ route('register') }}" class="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
+                    Join free
+                    <i class="fa-solid fa-arrow-right-long"></i>
+                </a>
+            @endauth
+        </div>
+
+        <button @click="open = ! open" class="lg:hidden inline-flex items-center justify-center rounded-md border border-emerald-200 bg-white p-2 text-emerald-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            <span class="sr-only">Toggle navigation</span>
+            <i :class="open ? 'fa-solid fa-xmark' : 'fa-solid fa-bars'" class="text-xl"></i>
+        </button>
     </div>
 
-    <!-- Responsive Navigation Menu -->
-    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
-        <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                {{ __('Dashboard') }}
-            </x-responsive-nav-link>
-        </div>
-
-        <!-- Responsive Settings Options -->
-        <div class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-600">
-            <div class="px-4">
-                <div class="font-medium text-base text-gray-800 dark:text-gray-200">{{ Auth::user()->name }}</div>
-                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
-            </div>
-
-            <div class="mt-3 space-y-1">
-                <x-responsive-nav-link :href="route('profile.edit')">
-                    {{ __('Profile') }}
-                </x-responsive-nav-link>
-
-                <!-- Authentication -->
-                <form method="POST" action="{{ route('logout') }}">
+    <!-- Mobile navigation -->
+    <div x-cloak x-show="open" x-transition class="lg:hidden border-t border-emerald-100/80 bg-white/95">
+        <div class="space-y-1 px-4 py-4">
+            <a href="{{ route('dashboard') }}" class="block rounded-lg px-4 py-3 text-sm font-medium {{ request()->routeIs('dashboard') ? 'bg-emerald-100 text-emerald-900' : 'text-emerald-700 hover:bg-emerald-50 hover:text-emerald-900' }}">Dashboard</a>
+            <a href="{{ route('recipes.catalog') }}" class="block rounded-lg px-4 py-3 text-sm font-medium {{ request()->routeIs('recipes.catalog') ? 'bg-emerald-100 text-emerald-900' : 'text-emerald-700 hover:bg-emerald-50 hover:text-emerald-900' }}">Recipes</a>
+            @auth
+                <a href="{{ route('recipes.index') }}" class="block rounded-lg px-4 py-3 text-sm font-medium {{ request()->routeIs('recipes.index') ? 'bg-emerald-100 text-emerald-900' : 'text-emerald-700 hover:bg-emerald-50 hover:text-emerald-900' }}">My Kitchen</a>
+                <a href="{{ route('meal-plan.index') }}" class="block rounded-lg px-4 py-3 text-sm font-medium {{ request()->routeIs('meal-plan.*') ? 'bg-emerald-100 text-emerald-900' : 'text-emerald-700 hover:bg-emerald-50 hover:text-emerald-900' }}">Meal Planner</a>
+                <a href="{{ route('profile.edit') }}" class="block rounded-lg px-4 py-3 text-sm font-medium text-emerald-700 hover:bg-emerald-50 hover:text-emerald-900">Profile</a>
+                <form method="POST" action="{{ route('logout') }}" class="pt-2">
                     @csrf
-
-                    <x-responsive-nav-link :href="route('logout')"
-                            onclick="event.preventDefault();
-                                        this.closest('form').submit();">
-                        {{ __('Log Out') }}
-                    </x-responsive-nav-link>
+                    <button type="submit" class="flex w-full items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium text-emerald-700 transition hover:bg-emerald-50 hover:text-emerald-900">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                        Log out
+                    </button>
                 </form>
-            </div>
+            @else
+                <a href="{{ route('login') }}" class="block rounded-lg px-4 py-3 text-sm font-medium text-emerald-700 hover:bg-emerald-50 hover:text-emerald-900">My Kitchen</a>
+                <a href="{{ route('login') }}" class="block rounded-lg px-4 py-3 text-sm font-medium text-emerald-700 hover:bg-emerald-50 hover:text-emerald-900">Meal Planner</a>
+                <a href="{{ route('login') }}" class="block rounded-lg px-4 py-3 text-sm font-medium text-emerald-700 hover:bg-emerald-50 hover:text-emerald-900">Log in</a>
+                <a href="{{ route('register') }}" class="block rounded-lg px-4 py-3 text-sm font-semibold text-emerald-800 hover:bg-emerald-100">Join free</a>
+            @endauth
         </div>
     </div>
 </nav>

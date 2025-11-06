@@ -22,6 +22,70 @@ Route::get('/', function () {
     return view('home');
 });
 
+Route::get('/recipes', function () {
+    $featuredRecipes = [
+        [
+            'title' => 'Chocolate Nut Milkshake',
+            'category' => 'Breakfast',
+            'summary' => 'Protein-rich cacao, almond butter, and coconut milk blended into a creamy start to your day.',
+            'image' => 'https://images.unsplash.com/photo-1497534446932-c925b458314e?auto=format&fit=crop&w=900&q=80',
+            'url' => 'https://drhyman.com/blogs/content/chocolate-nut-milkshake',
+            'tags' => ['High Protein', 'Dairy-Free'],
+        ],
+        [
+            'title' => 'Mushroom Walnut Stuffed Eggplant',
+            'category' => 'Dinner',
+            'summary' => 'Roasted eggplant filled with savory mushrooms, walnuts, and herbs for a hearty plant-based meal.',
+            'image' => 'https://images.unsplash.com/photo-1604908176997-12518821c635?auto=format&fit=crop&w=900&q=80',
+            'url' => 'https://drhyman.com/blogs/content/mushroom-walnut-stuffed-eggplant',
+            'tags' => ['Plant-Based', 'Gluten-Free'],
+        ],
+        [
+            'title' => 'Herbed Sardine Cakes with Avocado Salad',
+            'category' => 'Dinner',
+            'summary' => 'Omega-3 rich sardine cakes served with a refreshing avocado and broccoli salad.',
+            'image' => 'https://images.unsplash.com/photo-1612874471570-ec9cbf5c0077?auto=format&fit=crop&w=900&q=80',
+            'url' => 'https://drhyman.com/blogs/content/herbed-sardine-cakes-with-avocado-broccoli-salad',
+            'tags' => ['High Protein', 'Low Carb'],
+        ],
+        [
+            'title' => 'Bacon, Asparagus & Shallot Frittata',
+            'category' => 'Breakfast',
+            'summary' => 'An easy frittata packed with spring vegetables and smoky bacon for any time of day.',
+            'image' => 'https://images.unsplash.com/photo-1508739826987-b79cd8b7da12?auto=format&fit=crop&w=900&q=80',
+            'url' => 'https://drhyman.com/blogs/content/bacon-asparagus-shallot-frittata',
+            'tags' => ['Meal Prep', 'Gluten-Free'],
+        ],
+        [
+            'title' => 'Feel-Good Pesto Steak Salad',
+            'category' => 'Salad',
+            'summary' => 'Grass-fed steak sliced over greens with basil pesto, roasted tomatoes, and crisp veggies.',
+            'image' => 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=900&q=80',
+            'url' => 'https://drhyman.com/blogs/content/feel-good-pesto-steak-salad',
+            'tags' => ['High Protein', 'Weeknight Friendly'],
+        ],
+        [
+            'title' => 'Lemon Herb Chicken & Veggies',
+            'category' => 'Dinner',
+            'summary' => 'Sheet-pan roasted chicken with bright citrus, seasonal vegetables, and fresh herbs.',
+            'image' => 'https://images.unsplash.com/photo-1473093226795-af9932fe5856?auto=format&fit=crop&w=900&q=80',
+            'url' => 'https://drhyman.com/blogs/content/lemon-herb-chicken-veggies',
+            'tags' => ['Family Favorite', 'One-Pan'],
+        ],
+    ];
+
+    $communityRecipes = SavedRecipe::query()
+        ->select(['id', 'title', 'summary', 'ingredients', 'created_at'])
+        ->latest()
+        ->take(6)
+        ->get();
+
+    return view('recipes.index', [
+        'featuredRecipes' => $featuredRecipes,
+        'communityRecipes' => $communityRecipes,
+    ]);
+})->name('recipes.catalog');
+
 // =========== AI Recipe Generation ============= //
 Route::post('/recipe', function (Request $request) {
     $input = $request->input('recipe_link');
