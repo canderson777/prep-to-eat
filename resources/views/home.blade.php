@@ -320,13 +320,22 @@
                             <div class="mt-8 rounded-2xl bg-emerald-50/70 p-5 text-sm text-emerald-700">
                                 <p class="font-semibold">Want to save this recipe or add it to your calendar?</p>
                                 <p class="mt-2">Create a free account to unlock unlimited saved recipes and weekly planning tools.</p>
-                                <div class="mt-4 flex flex-col gap-3 sm:flex-row">
-                                    <a href="{{ route('register') }}" class="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
-                                        Join PrepToEat
+                                <div class="mt-4 grid gap-3 sm:grid-cols-3">
+                                    <button type="button" id="guest-save-recipe" class="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
+                                        Save locally (up to 4)
+                                        <i class="fa-solid fa-download"></i>
+                                    </button>
+                                    <a href="{{ route('recipes.local') }}" class="inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-semibold text-emerald-700 shadow-sm ring-1 ring-emerald-100 transition hover:bg-emerald-50">
+                                        View local recipes
                                     </a>
-                                    <a href="{{ route('login') }}" class="inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-semibold text-emerald-700 shadow-sm ring-1 ring-emerald-100 transition hover:bg-emerald-50">
-                                        Log in
-                                    </a>
+                                    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+                                        <a href="{{ route('register') }}" class="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
+                                            Join PrepToEat
+                                        </a>
+                                        <a href="{{ route('login') }}" class="inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-semibold text-emerald-700 shadow-sm ring-1 ring-emerald-100 transition hover:bg-emerald-50">
+                                            Log in
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         @endauth
@@ -524,14 +533,25 @@
         })();
 
         (function () {
-            const countLabel = document.getElementById('local-count');
-            if (!countLabel) return;
             const KEY = 'guestRecipes';
-            const current = (() => {
+            const helper = window.PrepToEatGuest = window.PrepToEatGuest || {};
+
+            helper.getStoredRecipes = function () {
                 try { return JSON.parse(localStorage.getItem(KEY)) || []; }
                 catch { return []; }
-            })();
-            countLabel.textContent = current.length;
+            };
+
+            helper.setStoredRecipes = function (items) {
+                localStorage.setItem(KEY, JSON.stringify(items));
+            };
+
+            helper.updateCounter = function () {
+                const label = document.getElementById('local-count');
+                if (!label) return;
+                label.textContent = helper.getStoredRecipes().length;
+            };
+
+            helper.updateCounter();
         })();
 
         (function () {
@@ -587,6 +607,40 @@
                 log.appendChild(wrapper);
                 log.scrollTop = log.scrollHeight;
             }
+        })();
+
+        (function () {
+            const saveBtn = document.getElementById('guest-save-recipe');
+            if (!saveBtn) return;
+
+            const helper = window.PrepToEatGuest || {};
+            const MAX = 4;
+            const payload = {
+                title: @json($title ?: 'Untitled Recipe'),
+                ingredients: @json($ingredients ?: ''),
+                instructions: @json($instructions ?: ''),
+                summary: @json($summary ?: ''),
+                recipe_html: @json($recipe ?: ''),
+                saved_at: new Date().toISOString(),
+            };
+
+            saveBtn.addEventListener('click', () => {
+                const current = helper.getStoredRecipes ? helper.getStoredRecipes() : [];
+                if (current.length >= MAX) {
+                    alert('You have reached the guest limit of 4 recipes. Log in or create an account for unlimited saves.');
+                    return;
+                }
+
+                const alreadySaved = current.some(item => (item.title || '').toLowerCase() === payload.title.toLowerCase());
+                if (alreadySaved) {
+                    alert('This recipe is already saved locally. You can view it in My Local Recipes.');
+                    return;
+                }
+
+                helper.setStoredRecipes ? helper.setStoredRecipes([...current, payload]) : localStorage.setItem('guestRecipes', JSON.stringify([...current, payload]));
+                if (helper.updateCounter) helper.updateCounter();
+                alert('Recipe saved locally! You can find it in My Local Recipes.');
+            });
         })();
     </script>
 @endpush
