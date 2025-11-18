@@ -33,6 +33,39 @@
 
     <section class="bg-white/80">
         <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:py-16 lg:px-8">
+            <!-- Filter Section -->
+            <div class="mb-10 rounded-3xl bg-emerald-50/80 p-6 shadow ring-1 ring-emerald-100">
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm font-semibold uppercase tracking-widest text-emerald-500">Filter recipes</p>
+                        <h2 class="text-xl font-semibold text-emerald-900">Find recipes by dietary needs</h2>
+                    </div>
+                    @if(!empty($selectedTags))
+                        <a href="{{ route('recipes.catalog') }}" class="text-sm font-semibold text-emerald-700 hover:text-emerald-900">
+                            Clear filters
+                        </a>
+                    @endif
+                </div>
+                
+                <form method="GET" action="{{ route('recipes.catalog') }}" id="filterForm" class="mt-6">
+                    <div class="flex flex-wrap gap-3">
+                        @foreach($allTags as $tag)
+                            <label class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold shadow-sm ring-1 ring-emerald-100 cursor-pointer transition hover:bg-emerald-50 {{ in_array($tag->id, $selectedTags) ? 'bg-emerald-100 text-emerald-900 ring-emerald-300' : 'text-emerald-700' }}">
+                                <input 
+                                    type="checkbox" 
+                                    name="tags[]" 
+                                    value="{{ $tag->id }}"
+                                    {{ in_array($tag->id, $selectedTags) ? 'checked' : '' }}
+                                    onchange="document.getElementById('filterForm').submit()"
+                                    class="rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500"
+                                >
+                                <span>{{ $tag->icon ?? '' }} {{ $tag->name }}</span>
+                            </label>
+                        @endforeach
+                    </div>
+                </form>
+            </div>
+
             <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <p class="text-sm font-semibold uppercase tracking-widest text-emerald-500">Featured by PrepToEat</p>
@@ -118,6 +151,15 @@
                                 <div class="mt-4 rounded-2xl bg-emerald-50/70 p-4 text-xs text-slate-600">
                                     <p class="font-semibold text-emerald-700">Key ingredients</p>
                                     <p class="mt-2 leading-relaxed">{{ \Illuminate\Support\Str::limit($communityRecipe->ingredients, 160) }}</p>
+                                </div>
+                            @endif
+                            @if($communityRecipe->tags->isNotEmpty())
+                                <div class="mt-4 flex flex-wrap gap-2 text-xs">
+                                    @foreach($communityRecipe->tags as $tag)
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700">
+                                            {{ $tag->icon ?? '' }} {{ $tag->name }}
+                                        </span>
+                                    @endforeach
                                 </div>
                             @endif
                         </div>

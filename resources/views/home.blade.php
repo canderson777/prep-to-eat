@@ -261,6 +261,29 @@
                         </div>
                                 </div>
 
+                                @php
+                                    $allTags = \App\Models\RecipeTag::orderBy('name')->get();
+                                @endphp
+                                <div class="grid gap-4 md:grid-cols-2">
+                                    <label class="text-sm font-semibold text-slate-700">Dietary Tags (optional)</label>
+                                    <div class="md:col-span-2">
+                                        <div class="mt-2 flex flex-wrap gap-3">
+                                            @foreach($allTags as $tag)
+                                                <label class="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-semibold shadow-sm ring-1 ring-emerald-100 cursor-pointer transition hover:bg-emerald-50">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        name="tags[]" 
+                                                        value="{{ $tag->id }}"
+                                                        class="rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500"
+                                                    >
+                                                    <span>{{ $tag->icon ?? '' }} {{ $tag->name }}</span>
+                                                </label>
+                                            @endforeach
+                                        </div>
+                                        <p class="mt-2 text-xs text-slate-500">Select tags that match this recipe's dietary characteristics.</p>
+                                    </div>
+                                </div>
+
                                 <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700">
                                     <i class="fa-solid fa-bookmark"></i>
                                     Save to My Kitchen

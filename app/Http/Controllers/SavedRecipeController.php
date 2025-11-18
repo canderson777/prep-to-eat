@@ -44,6 +44,11 @@ class SavedRecipeController extends Controller
         $recipe->category = $category;
         $recipe->save();
 
+        // Add tags
+        if ($request->has('tags') && is_array($request->tags)) {
+            $recipe->tags()->sync($request->input('tags'));
+        }
+
         // Clear generated recipe data from session
         session()->forget(['recipe', 'title', 'ingredients', 'instructions', 'summary']);
 
@@ -59,7 +64,7 @@ class SavedRecipeController extends Controller
                 $query->where(function ($inner) {
                     $inner->whereNull('expires_at')->orWhere('expires_at', '>', now());
                 })->orderByDesc('created_at');
-            }])
+            }, 'tags'])
             ->latest()
             ->get();
 
@@ -111,6 +116,13 @@ class SavedRecipeController extends Controller
         $recipe->category = $category;
         $recipe->summary = $request->input('summary');
         $recipe->save();
+
+        // Update tags
+        if ($request->has('tags') && is_array($request->tags)) {
+            $recipe->tags()->sync($request->input('tags'));
+        } else {
+            $recipe->tags()->detach();
+        }
 
         return redirect()->route('recipes.index')->with('success', 'Recipe updated!');
     }

@@ -6,6 +6,7 @@
     $recipeCount = $recipes->count();
     $upcomingCount = isset($upcomingPlans) ? $upcomingPlans->count() : 0;
     $latestSaved = optional($recipes->first())->created_at?->diffForHumans();
+    $allTags = \App\Models\RecipeTag::orderBy('name')->get();
 @endphp
 
 @section('content')
@@ -195,6 +196,16 @@
                                 </div>
                             @endif
 
+                            @if($recipe->tags->isNotEmpty())
+                                <div class="mt-6 flex flex-wrap gap-2 text-xs">
+                                    @foreach($recipe->tags as $tag)
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700">
+                                            {{ $tag->icon ?? '' }} {{ $tag->name }}
+                                        </span>
+                                    @endforeach
+                                </div>
+                            @endif
+
                             <div class="mt-6 flex flex-wrap gap-3 text-sm">
                                 <button type="button" data-panel-toggle="edit-panel-{{ $recipe->id }}" class="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 font-semibold text-white transition hover:bg-emerald-700">
                                     <i class="fa-solid fa-pen-to-square"></i>
@@ -348,6 +359,24 @@
                                         @if($isEditingThis && $errors->has('summary'))
                                             <p class="mt-1 text-xs text-red-500">{{ $errors->first('summary') }}</p>
                                         @endif
+                                    </div>
+                                    <div>
+                                        <label class="text-sm font-semibold text-slate-700">Dietary Tags (optional)</label>
+                                        <div class="mt-2 flex flex-wrap gap-3">
+                                            @foreach($allTags as $tag)
+                                                <label class="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-semibold shadow-sm ring-1 ring-emerald-100 cursor-pointer transition hover:bg-emerald-50">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        name="tags[]" 
+                                                        value="{{ $tag->id }}"
+                                                        {{ $recipe->tags->contains($tag->id) ? 'checked' : '' }}
+                                                        class="rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500"
+                                                    >
+                                                    <span>{{ $tag->icon ?? '' }} {{ $tag->name }}</span>
+                                                </label>
+                                            @endforeach
+                                        </div>
+                                        <p class="mt-2 text-xs text-slate-500">Select tags that match this recipe's dietary characteristics.</p>
                                     </div>
                                     <div class="flex flex-wrap gap-3">
                                         <button type="submit" class="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">

@@ -22,7 +22,7 @@ Route::get('/', function () {
     return view('home');
 });
 
-Route::get('/recipes', function () {
+Route::get('/recipes', function (Request $request) {
     $featuredRecipes = [
         [
             'title' => 'Chocolate Nut Milkshake',
@@ -74,15 +74,27 @@ Route::get('/recipes', function () {
         ],
     ];
 
-    $communityRecipes = SavedRecipe::query()
-        ->select(['id', 'title', 'summary', 'ingredients', 'created_at'])
-        ->latest()
-        ->take(6)
-        ->get();
-
+    $query = SavedRecipe::query()
+        ->with('tags')
+        ->select(['id', 'title', 'summary', 'ingredients', 'created_at']);
+    
+    // Add filtering by tags
+    if ($request->has('tags') && is_array($request->tags) && !empty($request->tags)) {
+        $query->whereHas('tags', function ($q) use ($request) {
+            $q->whereIn('recipe_tags.id', $request->tags);
+        });
+    }
+    
+    $communityRecipes = $query->latest()->take(6)->get();
+    
+    // Get all available tags for filter UI
+    $allTags = \App\Models\RecipeTag::orderBy('name')->get();
+    
     return view('recipes.index', [
         'featuredRecipes' => $featuredRecipes,
         'communityRecipes' => $communityRecipes,
+        'allTags' => $allTags,
+        'selectedTags' => $request->input('tags', []),
     ]);
 })->name('recipes.catalog');
 

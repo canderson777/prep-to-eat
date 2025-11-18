@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class SavedRecipe extends Model
 {
@@ -38,5 +39,10 @@ class SavedRecipe extends Model
     public function shares(): HasMany
     {
         return $this->hasMany(RecipeShare::class);
+    }
+
+    public function tags(): BelongsToMany
+    {
+        return $this->belongsToMany(RecipeTag::class, 'recipe_tag');
     }
 }
