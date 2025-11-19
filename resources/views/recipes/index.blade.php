@@ -107,7 +107,7 @@
                                     View source
                                     <i class="fa-solid fa-arrow-up-right-from-square"></i>
                                 </a>
-                                <form action="{{ url('/recipe') }}" method="POST" class="flex-1">
+                                <form action="{{ route('recipe.generate') }}" method="POST" class="flex-1">
                                     @csrf
                                     <input type="hidden" name="recipe_link" value="{{ $recipe['url'] }}">
                                     <button type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-600 px-4 py-2 font-semibold text-white transition hover:bg-emerald-700">

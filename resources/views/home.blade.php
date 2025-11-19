@@ -177,7 +177,7 @@
                     </div>
                 @endif
 
-                <form method="POST" action="{{ url('/recipe') }}" id="recipeForm" enctype="multipart/form-data" novalidate class="mt-6 space-y-5">
+                <form method="POST" action="{{ route('recipe.generate') }}" id="recipeForm" enctype="multipart/form-data" novalidate class="mt-6 space-y-5">
                     @csrf
                     <label for="recipe_link" class="block text-sm font-semibold text-slate-700">Recipe link or text</label>
                     <textarea name="recipe_link" id="recipe_link" rows="6" placeholder="Paste the recipe URL, ingredients list, or cooking instructions here..." required class="w-full rounded-2xl border border-emerald-100 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"></textarea>
@@ -371,7 +371,7 @@
                                 </div>
                                 <i class="fa-solid fa-message text-2xl text-emerald-500"></i>
                             </div>
-                            <form method="POST" action="{{ url('/recipe/ask') }}" class="mt-6 space-y-4">
+                            <form method="POST" action="{{ route('recipe.ask') }}" class="mt-6 space-y-4">
                                 @csrf
                                 <label for="question" class="text-sm font-semibold text-slate-700">Your question</label>
                                 <textarea id="question" name="question" rows="3" placeholder="Need a dairy-free swap? Want to reduce sodium? Ask away." required class="w-full rounded-xl border border-emerald-100 bg-white px-4 py-2 text-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"></textarea>
