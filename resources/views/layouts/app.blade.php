@@ -15,13 +15,31 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-bx1EyQ2XDT5DMr0YJIUKGwEuITdSb9VjA36TObgGJE0E7E5Wdl66iRS0LlwM651c01qmPvvrL1jAUx0vYB6NWg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <!-- Scripts -->
+    <script>
+        (() => {
+            try {
+                const stored = localStorage.getItem('darkMode');
+                const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                const isDark = stored === null ? prefersDark : stored === 'true';
+
+                document.documentElement.classList.toggle('dark', isDark);
+                document.documentElement.dataset.theme = isDark ? 'dark' : 'light';
+            } catch (error) {
+                // Fallback: rely on system preference if storage is not accessible
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    document.documentElement.classList.add('dark');
+                    document.documentElement.dataset.theme = 'dark';
+                }
+            }
+        })();
+    </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     @stack('head')
 
     <style>[x-cloak]{display:none!important;}</style>
 </head>
-<body class="font-sans antialiased text-slate-900 bg-gradient-to-b from-emerald-50 via-white to-white">
+<body class="font-sans antialiased text-slate-900 dark:text-slate-100 bg-gradient-to-b from-emerald-50 via-white to-white dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
     <div class="flex min-h-screen flex-col">
         @include('layouts.navigation')
 
